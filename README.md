@@ -22,10 +22,10 @@ Decentralized Mesh Sync: Utilizes RxDB and Yjs with CRDTs to merge text logs and
 ​Security: Secures offline data using AES-256-GCM encryption and Role-Based Access Control (RBAC).
 
 Tech Stack
-​Frontend UI: <Insert Next.js React Vite e.g., framework, or>, PWA Configuration  
+​Frontend UI: Google demo API,Web API ,PWA Configuration  
 ​Offline AI Engine: WebLLM, Web Workers  
 ​Local DB & Sync: RxDB, Yjs (y-webrtc / y-indexeddb)  
 ​Security & Crypto: WebCrypto API  
 
-​Demo Assets
-Pitch Deck: 
+
+   
