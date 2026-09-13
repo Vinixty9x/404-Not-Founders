@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LifeKeeper — Integrated Prototype</title>
+<style>
+:root{
+  --bg:#F1F1EE;--surface:#fff;--border:#E2E1DB;--text:#1C1C1A;
+  --text-secondary:#6B6A63;--accent:#0F6E56;--accent-bg:#E1F5EE;
+  --warn:#92400E;--warn-bg:#FDECC8;
+}
+.phone.disaster{--bg:#FBECE9;--surface:#fff;--border:#F0C9C2;--text:#2A1614;
+  --text-secondary:#8C4A3F;--accent:#B3261E;--accent-bg:#FBDAD5;}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+background:#F1F1EE;display:flex;justify-content:center;padding:32px 16px}
+.phone{width:380px;background:var(--bg);border-radius:28px;border:1px solid var(--border);
+overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.banner{display:none;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:9px 16px;
+font-size:12px;font-weight:600}
+.phone.disaster .banner{display:flex}
+.content{padding:18px;min-height:560px;background:var(--bg)}
+.card{background:var(--surface);border-radius:14px;border:1px solid var(--border)}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.brand{font-weight:700;font-size:16px;color:var(--text)}
+.status-pill{display:flex;align-items:center;gap:6px;background:var(--warn-bg);color:var(--warn);
+padding:5px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.mode-toggle{display:flex;gap:8px;margin-bottom:18px;background:var(--surface);border:1px solid var(--border);
+border-radius:999px;padding:4px}
+.mode-toggle button{flex:1;padding:9px;border-radius:999px;border:none;background:transparent;font-size:13px;
+font-weight:600;cursor:pointer;color:var(--text-secondary)}
+.mode-toggle button.active{background:var(--accent);color:#fff}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{padding:14px}.stat-card .label{font-size:12px;color:var(--text-secondary);margin:0 0 4px}
+.stat-card .value{font-size:22px;font-weight:700;margin:0;color:var(--text)}
+.ai-card{background:var(--accent-bg);border-radius:14px;padding:14px;margin-bottom:14px;border:1px solid var(--border)}
+.ai-card .label{font-size:11px;color:var(--accent);font-weight:700;margin:0 0 6px}
+.ai-card p.body{font-size:14px;line-height:1.5;margin:0;color:var(--text)}
+.agency-strip{display:none;align-items:center;gap:8px;background:var(--accent-bg);border:1px solid var(--accent);
+border-radius:10px;padding:9px 12px;font-size:12px;color:var(--accent);font-weight:600;margin-bottom:14px}
+.phone.disaster .agency-strip{display:flex}
+.action-btn{display:flex;align-items:center;gap:10px;width:100%;padding:13px;border-radius:12px;border:1px solid var(--border);
+background:var(--surface);font-size:14px;margin-bottom:8px;cursor:pointer;color:var(--text);text-align:left}
+.action-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.action-btn svg{flex-shrink:0}
+h2.screen-title{font-size:15px;font-weight:700;margin:0 0 14px;color:var(--text)}
+.entry{border-bottom:1px solid var(--border);padding:12px 0}.entry:last-child{border-bottom:none}
+.entry .tag{display:inline-block;font-size:11px;padding:3px 8px;border-radius:999px;margin-bottom:6px;
+background:var(--accent-bg);color:var(--accent);font-weight:600}
+.entry .snippet{font-size:14px;margin:0 0 4px;line-height:1.4;color:var(--text)}
+.entry .time{font-size:12px;color:var(--text-secondary)}
+.field-label{font-size:12px;color:var(--text-secondary);margin:0 0 4px;font-weight:600}
+select,input[type=text],textarea{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);
+font-size:14px;margin-bottom:14px;font-family:inherit;background:var(--surface);color:var(--text)}
+textarea{resize:vertical}.sev-high{color:#B3261E;font-weight:700}.sev-med{color:var(--warn);font-weight:700}
+.log-item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);
+font-size:13px;color:var(--text);gap:8px}.log-item:last-child{border-bottom:0}
+.chip-row{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px}
+.chip{flex-shrink:0;padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);
+font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;cursor:pointer}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.peer-bar{font-size:12px;color:var(--text-secondary);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.bubble{max-width:75%;padding:10px 12px;border-radius:14px;font-size:14px;margin-bottom:8px;line-height:1.4}
+.bubble.them{background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:4px;color:var(--text)}
+.bubble.me{background:var(--accent);color:#fff;margin-left:auto;border-bottom-right-radius:4px}
+.bubble .meta{font-size:11px;opacity:.7;margin-top:4px}
+.chat-compose{display:flex;gap:7px;margin-top:10px}.chat-compose input{margin:0}.chat-compose button{width:70px;
+border:0;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+.map-box{position:relative;height:300px;border-radius:14px;background:var(--surface);border:1px solid var(--border);
+margin-bottom:10px;overflow:hidden}
+#google-map{width:100%;height:100%}
+.map-status{font-size:11px;color:var(--text-secondary);margin:0 0 12px}
+.map-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.map-actions button{padding:9px;border:1px solid var(--border);background:var(--surface);border-radius:9px;cursor:pointer;
+font-size:12px;color:var(--text)}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--text-secondary);flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:5px}.legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.tabbar{display:flex;border-top:1px solid var(--border);background:var(--surface)}
+.tabbar button{flex:1;padding:12px 0;background:none;border:none;font-size:10.5px;color:var(--text-secondary);
+cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.tabbar button.active{color:var(--accent);font-weight:700}
+.small-note{font-size:11px;color:var(--text-secondary);line-height:1.4;margin:8px 0 0}
+.empty{padding:18px;text-align:center;color:var(--text-secondary);font-size:13px}
+
+
+/* ===== LifeKeeper visual refresh ===== */
+:root{
+  --bg:#eef3f1;--surface:rgba(255,255,255,.94);--border:rgba(28,55,48,.10);
+  --text:#17231f;--text-secondary:#65736e;--accent:#0b7a61;--accent-bg:#e4f5ef;
+  --warn:#a05a13;--warn-bg:#fff2d9;--shadow:0 18px 45px rgba(25,55,47,.10);
+}
+*{scrollbar-width:thin;scrollbar-color:#b9c8c2 transparent}
+body{
+  min-height:100vh;padding:34px 16px;
+  background:radial-gradient(circle at 20% 10%,#dff4ec 0,transparent 34%),radial-gradient(circle at 90% 90%,#dce9ff 0,transparent 32%),#edf1ef;
+}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(120deg,rgba(255,255,255,.35),transparent 45%)}
+.phone{
+  width:min(420px,100%);border:1px solid rgba(28,55,48,.12);border-radius:34px;
+  box-shadow:0 28px 80px rgba(28,55,48,.16),0 2px 8px rgba(28,55,48,.06);
+  background:var(--bg);position:relative;isolation:isolate;
+}
+.phone:before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:72px;height:5px;border-radius:10px;background:rgba(28,55,48,.13);z-index:5}
+.banner{padding:10px 18px;margin-top:4px;font-size:11px;letter-spacing:.15px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.content{padding:22px 20px 20px;min-height:610px;background:linear-gradient(180deg,rgba(255,255,255,.18),transparent)}
+.topbar{margin:2px 0 20px}
+.brand{font-size:20px;letter-spacing:-.4px;display:flex;align-items:center;gap:8px}
+.brand:before{content:"✦";display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--accent);color:#fff;font-size:13px;box-shadow:0 5px 12px rgba(11,122,97,.22)}
+.status-pill{background:rgba(255,242,217,.9);border:1px solid rgba(160,90,19,.10);padding:7px 10px;font-size:10px}
+.mode-toggle{padding:4px;margin-bottom:20px;box-shadow:0 6px 18px rgba(28,55,48,.06)}
+.mode-toggle button{padding:10px;font-size:12px;transition:.2s ease}
+.mode-toggle button:hover{transform:translateY(-1px)}
+.mode-toggle button.active{box-shadow:0 5px 13px rgba(11,122,97,.20)}
+.card{
+  border-radius:18px;border-color:var(--border);box-shadow:0 7px 22px rgba(28,55,48,.045);backdrop-filter:blur(10px)
+}
+.stat-row{gap:12px;margin-bottom:16px}
+.stat-card{padding:17px;position:relative;overflow:hidden}
+.stat-card:after{content:"";position:absolute;right:-18px;top:-18px;width:58px;height:58px;border-radius:50%;background:var(--accent-bg);opacity:.8}
+.stat-card .label{font-size:11px;letter-spacing:.2px;text-transform:uppercase}
+.stat-card .value{font-size:25px;letter-spacing:-.7px}
+.ai-card{border:0;box-shadow:0 8px 24px rgba(11,122,97,.08);padding:17px;position:relative;overflow:hidden}
+.ai-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+.ai-card .label{letter-spacing:.4px;text-transform:uppercase}
+.ai-card p.body{font-size:13.5px}
+.action-btn{border-color:var(--border);border-radius:14px;padding:14px 15px;margin-bottom:9px;box-shadow:0 4px 12px rgba(28,55,48,.035);transition:transform .18s,box-shadow .18s,border-color .18s}
+.action-btn:hover{transform:translateY(-2px);box-shadow:0 9px 20px rgba(28,55,48,.09);border-color:rgba(11,122,97,.22)}
+.action-btn.primary{box-shadow:0 8px 18px rgba(11,122,97,.20)}
+.screen-title{font-size:18px!important;letter-spacing:-.3px;margin-bottom:16px!important}
+.field-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+select,input[type=text],textarea{border-radius:12px;padding:12px;border-color:rgba(28,55,48,.12);box-shadow:inset 0 1px 2px rgba(28,55,48,.025);outline:none;transition:.2s}
+select:focus,input[type=text]:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(11,122,97,.10)}
+textarea{line-height:1.5}
+.entry{padding:14px 2px}.entry .tag{padding:4px 9px}.entry .snippet{font-size:13.5px}
+.log-item{padding:13px 2px;align-items:center}
+.chip-row{padding:2px 2px 7px}.chip{box-shadow:0 3px 9px rgba(28,55,48,.04);transition:.18s}.chip:hover{transform:translateY(-1px)}
+.peer-bar{background:var(--surface);border:1px solid var(--border);padding:9px 11px;border-radius:10px;font-size:11px}
+.bubble{box-shadow:0 5px 14px rgba(28,55,48,.06);padding:11px 13px}
+.bubble.me{box-shadow:0 7px 15px rgba(11,122,97,.16)}
+.chat-compose{padding:5px;background:rgba(255,255,255,.55);border:1px solid var(--border);border-radius:13px}
+.chat-compose input{border:0;background:transparent;box-shadow:none;margin:0}.chat-compose input:focus{box-shadow:none}
+.chat-compose button{width:68px;border-radius:10px;box-shadow:0 4px 10px rgba(11,122,97,.16)}
+.map-box{height:310px;border-radius:18px;box-shadow:0 10px 25px rgba(28,55,48,.10)}
+.map-actions{gap:9px}.map-actions button{border-radius:11px;transition:.18s}.map-actions button:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(28,55,48,.08)}
+.legend{padding:10px 11px;background:rgba(255,255,255,.65);border:1px solid var(--border);border-radius:11px}
+.tabbar{height:70px;border-top:1px solid rgba(28,55,48,.09);box-shadow:0 -8px 25px rgba(28,55,48,.05)}
+.tabbar button{font-size:10px;transition:.18s;position:relative}.tabbar button:hover{background:rgba(11,122,97,.04)}
+.tabbar button.active:before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 5px 5px;background:var(--accent)}
+.small-note{font-size:10.5px}
+.empty{padding:24px 14px;background:rgba(255,255,255,.35);border-radius:12px;margin:4px 0}
+@media(max-width:450px){body{padding:0}.phone{border-radius:0;min-height:100vh;width:100%}.phone:before{display:none}.content{min-height:calc(100vh - 70px)}}
+
+/* Disaster palette refinement */
+.phone.disaster{--bg:#fff5f2;--surface:rgba(255,255,255,.96);--border:rgba(145,55,45,.12);--text:#2a1614;--text-secondary:#8c4a3f;--accent:#c0392b;--accent-bg:#fde5e0;--shadow:0 18px 45px rgba(145,55,45,.12)}
+.phone.disaster .brand:before{background:#c0392b;box-shadow:0 5px 12px rgba(192,57,43,.22)}
+.phone.disaster .action-btn.primary{box-shadow:0 8px 18px rgba(192,57,43,.20)}
+
+/* ===== New: onboarding/settings modal, helpline, location, media, mic, toast ===== */
+.icon-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface);
+  display:grid;place-items:center;cursor:pointer;color:var(--text);flex-shrink:0}
+.icon-btn:hover{border-color:var(--accent)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.modal-overlay{position:absolute;inset:0;background:rgba(15,25,22,.46);z-index:40;display:flex;
+  align-items:flex-end;justify-content:center;border-radius:34px;backdrop-filter:blur(2px)}
+.modal-box{width:100%;max-height:88%;overflow-y:auto;background:var(--bg);border-radius:24px 24px 0 0;
+  padding:22px 20px 26px;box-shadow:0 -20px 50px rgba(0,0,0,.25)}
+.modal-box h2{margin:0 0 6px;font-size:18px;color:var(--text)}
+.modal-box p.intro{font-size:12.5px;color:var(--text-secondary);margin:0 0 16px;line-height:1.5}
+.lang-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.lang-grid button{padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface);
+  font-size:12.5px;cursor:pointer;color:var(--text);text-align:left}
+.lang-grid button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ai-toggle{display:flex;gap:8px;margin-bottom:14px}
+.ai-toggle button{flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface);
+  font-size:12px;font-weight:600;cursor:pointer;color:var(--text)}
+.ai-toggle button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;margin-top:6px}
+.modal-actions .action-btn{margin-bottom:0}
+.text-btn{background:none;border:none;color:var(--text-secondary);font-size:12.5px;text-decoration:underline;
+  cursor:pointer;padding:6px 0;width:100%;text-align:center}
+.helpline-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:6px 12px;
+  margin-bottom:14px;box-shadow:0 7px 20px rgba(28,55,48,.05)}
+.helpline-card h3{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--accent);
+  margin:12px 0 4px;font-weight:700}
+.helpline-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;
+  border-bottom:1px solid var(--border);gap:10px}
+.helpline-row:last-of-type{border-bottom:none}
+.helpline-row .name{font-size:13px;color:var(--text);font-weight:600}
+.helpline-row .num{font-size:12px;color:var(--text-secondary)}
+.call-chip{display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;border:none;
+  background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}
+.helpline-note{font-size:10.5px;color:var(--text-secondary);line-height:1.4;margin:2px 0 10px}
+.location-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;
+  margin-bottom:14px;box-shadow:0 7px 20px rgba(28,55,48,.05)}
+.location-card h3{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--accent);
+  margin:0 0 10px;font-weight:700}
+.location-row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text);
+  padding:6px 0;border-bottom:1px solid var(--border)}
+.location-row:last-of-type{border-bottom:none}
+.location-row span.k{color:var(--text-secondary)}
+.location-actions{display:flex;gap:8px;margin-top:10px}
+.location-actions button{flex:1;padding:10px;border-radius:10px;border:none;background:var(--accent);
+  color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.location-actions button.secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.media-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.media-item{position:relative;border-radius:14px;overflow:hidden;background:var(--surface);
+  border:1px solid var(--border);aspect-ratio:1/1}
+.media-item img,.media-item video{width:100%;height:100%;object-fit:cover;display:block}
+.media-item .del{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;
+  border:none;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;font-size:13px;line-height:1}
+.media-add-row{display:flex;gap:8px;margin-bottom:4px}
+.media-add-row .action-btn{margin-bottom:0}
+.fab-mic{position:absolute;right:18px;bottom:86px;width:54px;height:54px;border-radius:50%;
+  background:var(--accent);color:#fff;border:none;display:grid;place-items:center;font-size:20px;
+  cursor:pointer;box-shadow:0 10px 24px rgba(11,122,97,.35);z-index:20;transition:transform .15s}
+.phone.disaster .fab-mic{box-shadow:0 10px 24px rgba(192,57,43,.35)}
+.fab-mic.listening{animation:pulse 1.1s infinite}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
+.toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:#17231f;color:#fff;
+  padding:9px 16px;border-radius:999px;font-size:12px;z-index:50;box-shadow:0 10px 24px rgba(0,0,0,.25);
+  max-width:88%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+  <div class="banner" id="banner"></div>
+  <div class="content" id="content"></div>
+  <button class="fab-mic" id="fabMic" onclick="startVoiceCommand()" title="Voice command" aria-label="Voice command">🎤</button>
+  <div class="tabbar" id="tabbar">
+    <button data-tab="home">⌂<span>Home</span></button>
+    <button data-tab="log">▤<span id="logTab">Journal</span></button>
+    <button data-tab="chat">☁<span>Chat</span></button>
+    <button data-tab="map">⌖<span>Map</span></button>
+    <button data-tab="media">▣<span id="mediaTabLabel">Media</span></button>
+  </div>
+  <div id="modalRoot"></div>
+</div>
+
+<script>
+/*
+  GOOGLE MAPS SETUP
+  1. Create a Google Cloud project.
+  2. Enable Maps JavaScript API.
+  3. Create an API key and restrict it to your website.
+  4. Replace YOUR_GOOGLE_MAPS_API_KEY below.
+  The app falls back to a simple map message if the key is not configured.
+*/
+const GOOGLE_MAPS_API_KEY = "AIzaSyCsmcbCzxpsqNM2a2GDEGRN5wqYYpFbbYo";
+
+/*
+  AI SETUP
+  Online mode: paste a Gemini API key into Settings (gear icon). Requests go
+  straight from this browser to Google's Generative Language API.
+  Offline mode: wire your own on-device / local-server model into
+  window.offlineAIModel.respond(promptText) -> Promise<string>. See
+  offlineAIRespond() below for the exact contract.
+*/
+
+const svg = { notebook:'▤', alert:'⚠', chat:'☁', shield:'✓', gear:'⚙', mic:'🎤' };
+
+/* ===================== Translations ===================== */
+const TR = {
+en:{brand:"LifeKeeper",statusOffline:"Offline · local data saved",modeDaily:"Daily life",modeDisaster:"Disaster mode",
+navHome:"Home",navJournal:"Journal",navLog:"Log",navChat:"Chat",navMap:"Map",navMedia:"Media",
+disasterBanner:"DISASTER MODE ACTIVE — your number & location are ready to share",
+homeJournalEntries:"Journal entries",homePeersNearby:"Peers nearby",
+homeAISummaryEmpty:"No journal entries saved yet. Add one to start your daily record.",
+homeAISummaryHas:"Your saved journal entries are available offline on this device.",
+btnNewJournal:"New journal entry",btnOpenChat:"Open peer chat",btnSwitchDisaster:"Switch to disaster mode",
+homeOpenIncidents:"Open incidents",homeAIGuidanceLoading:"Getting the latest guidance…",
+btnLogIncident:"Log incident",btnOpenMeshChat:"Open mesh chat & communities",btnOpenMap:"Open realistic map",
+btnExitDisaster:"Exit disaster mode",agencyNotified:"Riverside Relief Agency notified & connected",
+helplineTitle:"Emergency helplines",helplineNote:"Tap a number to call directly. Verify local numbers with your State Disaster Management Authority.",
+locationTitle:"Your info, ready for authorities",locationYourNumber:"Your number",locationYourLocation:"Your location",
+locationFetching:"Locating you…",locationUnavailable:"Location unavailable — allow location access",
+locationShareBtn:"Send to disaster helpline",locationCopyBtn:"Copy details",locationNoPhone:"Add your phone number in Settings",
+journalTitle:"Daily journal",journalFieldLabel:"New entry",journalPlaceholder:"Write about your day...",
+journalSave:"Save journal entry",journalEmpty:"Your saved journal entries will appear here.",
+incidentTitle:"Log an incident",incidentTypeLabel:"Type",incidentSeverityLabel:"Severity",incidentNotesLabel:"Notes",
+incidentNotesPlaceholder:"Short description... or tap the mic to dictate",incidentSave:"Save incident",
+incidentSaveNote:"Saved incidents remain on this device using local storage and can be synchronized with a backend later.",
+incidentRecent:"Recent",incidentEmpty:"No incidents saved yet.",incidentAttach:"Attach photo/video from Media",
+chatTitleDaily:"Peer chat",chatTitleDisaster:"Mesh chat & communities",chatPlaceholderDaily:"Message peers nearby...",
+chatPlaceholderDisaster:"Message {community}...",chatSend:"Send",chatPeersNearbyDaily:"3 peers nearby",
+chatPeersConnected:"7 peers connected — community: {community}",
+chatCommunityNote:"Community buttons are active filters. In a real deployment, connect this UI to WebSocket/WebRTC mesh transport.",
+mapTitleDaily:"Nearby map",mapTitleDisaster:"Disaster response map",
+mapStatus:"Uses Google Maps for real roads, places and satellite/map layers. Browser location permission is optional.",
+btnLocateMe:"Locate me",btnZoomIn:"Zoom in",btnZoomOut:"Zoom out",btnSatellite:"Satellite view",
+mediaTitle:"Photos & videos",mediaAdd:"Add from gallery",mediaCapture:"Capture with camera",
+mediaEmpty:"No photos or videos added yet.",mediaDelete:"Delete",
+mediaNote:"Media stays on this device for this session and can be attached to incident reports.",
+settingsTitle:"Settings",settingsPhone:"Your phone number",
+settingsPhoneNote:"Shared automatically with authorities if you activate disaster mode.",
+settingsLanguage:"Language",settingsGeminiKey:"Gemini API key (online AI)",
+settingsGeminiNote:"Stored only on this device. Used to fetch live AI guidance when you're online.",
+settingsAIMode:"AI mode",settingsAIOnline:"Online (Gemini)",settingsAIOffline:"Offline (on-device)",
+settingsOfflineNote:"Offline mode calls your own on-device model — wire it up at window.offlineAIModel.respond() in the code.",
+settingsSave:"Save settings",settingsClearData:"Clear all local data",settingsClose:"Close",
+onboardTitle:"Welcome to LifeKeeper",
+onboardIntro:"A few details let us get your number and location to authorities in one tap if disaster strikes.",
+onboardName:"Your name (optional)",onboardPhone:"Your phone number",
+onboardPhoneNote:"Used only to share with authorities in disaster mode.",onboardLanguage:"Preferred language",
+onboardContinue:"Continue",onboardSkip:"Skip for now",
+micListening:"Listening…",micNotSupported:"Voice commands aren't supported in this browser.",
+micHeard:"Heard: \u201c{text}\u201d",
+typeSupply:"Supply shortage",typeInjury:"Injury / medical",typeStructural:"Structural damage",typeMissing:"Missing person",typeOther:"Other",
+sevLow:"Low",sevMed:"Medium",sevHigh:"High",
+comAll:"All peers",comMedical:"Medical",comEngineering:"Engineering",comCooking:"Cooking",comSecurity:"Security",comLogistics:"Logistics",
+hlEmergency:"National Emergency",hlAmbulance:"Ambulance",hlPolice:"Police",hlFire:"Fire",hlDisaster:"Disaster Mgmt (NDMA)",hlWomen:"Women Helpline",hlChild:"Child Helpline"},
+
+hi:{brand:"LifeKeeper",statusOffline:"ऑफ़लाइन · डेटा डिवाइस पर सुरक्षित",modeDaily:"सामान्य जीवन",modeDisaster:"आपदा मोड",
+navHome:"होम",navJournal:"डायरी",navLog:"लॉग",navChat:"चैट",navMap:"मानचित्र",navMedia:"मीडिया",
+disasterBanner:"आपदा मोड सक्रिय — आपका नंबर व स्थान भेजने के लिए तैयार है",
+homeJournalEntries:"डायरी प्रविष्टियाँ",homePeersNearby:"आस-पास के लोग",
+homeAISummaryEmpty:"अभी तक कोई डायरी प्रविष्टि नहीं है। शुरू करने के लिए एक जोड़ें।",
+homeAISummaryHas:"आपकी सहेजी गई डायरी प्रविष्टियाँ इस डिवाइस पर ऑफ़लाइन उपलब्ध हैं।",
+btnNewJournal:"नई डायरी प्रविष्टि",btnOpenChat:"पीयर चैट खोलें",btnSwitchDisaster:"आपदा मोड में जाएँ",
+homeOpenIncidents:"खुली घटनाएँ",homeAIGuidanceLoading:"ताज़ा मार्गदर्शन लाया जा रहा है…",
+btnLogIncident:"घटना दर्ज करें",btnOpenMeshChat:"मेश चैट व समुदाय खोलें",btnOpenMap:"मानचित्र खोलें",
+btnExitDisaster:"आपदा मोड से बाहर निकलें",agencyNotified:"रिवरसाइड रिलीफ़ एजेंसी को सूचित व जोड़ा गया",
+helplineTitle:"आपातकालीन हेल्पलाइन",helplineNote:"सीधे कॉल करने के लिए नंबर दबाएँ। स्थानीय नंबर राज्य आपदा प्रबंधन प्राधिकरण से सत्यापित करें।",
+locationTitle:"आपकी जानकारी, अधिकारियों के लिए तैयार",locationYourNumber:"आपका नंबर",locationYourLocation:"आपका स्थान",
+locationFetching:"आपका स्थान पता किया जा रहा है…",locationUnavailable:"स्थान उपलब्ध नहीं — स्थान की अनुमति दें",
+locationShareBtn:"आपदा हेल्पलाइन को भेजें",locationCopyBtn:"विवरण कॉपी करें",locationNoPhone:"सेटिंग्स में अपना फ़ोन नंबर जोड़ें",
+journalTitle:"दैनिक डायरी",journalFieldLabel:"नई प्रविष्टि",journalPlaceholder:"अपने दिन के बारे में लिखें...",
+journalSave:"डायरी प्रविष्टि सहेजें",journalEmpty:"आपकी सहेजी गई डायरी प्रविष्टियाँ यहाँ दिखेंगी।",
+incidentTitle:"घटना दर्ज करें",incidentTypeLabel:"प्रकार",incidentSeverityLabel:"गंभीरता",incidentNotesLabel:"विवरण",
+incidentNotesPlaceholder:"संक्षिप्त विवरण लिखें... या बोलने के लिए माइक दबाएँ",incidentSave:"घटना सहेजें",
+incidentSaveNote:"सहेजी गई घटनाएँ इस डिवाइस पर स्थानीय रूप से रहती हैं और बाद में बैकएंड से समन्वित की जा सकती हैं।",
+incidentRecent:"हाल की घटनाएँ",incidentEmpty:"अभी तक कोई घटना दर्ज नहीं है।",incidentAttach:"मीडिया से फ़ोटो/वीडियो जोड़ें",
+chatTitleDaily:"पीयर चैट",chatTitleDisaster:"मेश चैट व समुदाय",chatPlaceholderDaily:"आस-पास के लोगों को संदेश भेजें...",
+chatPlaceholderDisaster:"{community} को संदेश भेजें...",chatSend:"भेजें",chatPeersNearbyDaily:"आस-पास 3 लोग",
+chatPeersConnected:"7 लोग जुड़े हैं — समुदाय: {community}",
+chatCommunityNote:"समुदाय बटन सक्रिय फ़िल्टर हैं। वास्तविक उपयोग में इसे WebSocket/WebRTC मेश से जोड़ें।",
+mapTitleDaily:"आस-पास का मानचित्र",mapTitleDisaster:"आपदा प्रतिक्रिया मानचित्र",
+mapStatus:"असली सड़कों, स्थानों व सैटेलाइट/मानचित्र परतों के लिए Google Maps का उपयोग। स्थान अनुमति वैकल्पिक है।",
+btnLocateMe:"मेरा स्थान दिखाएँ",btnZoomIn:"ज़ूम इन",btnZoomOut:"ज़ूम आउट",btnSatellite:"सैटेलाइट दृश्य",
+mediaTitle:"फ़ोटो व वीडियो",mediaAdd:"गैलरी से जोड़ें",mediaCapture:"कैमरे से लें",
+mediaEmpty:"अभी तक कोई फ़ोटो या वीडियो नहीं जोड़ा गया।",mediaDelete:"हटाएँ",
+mediaNote:"मीडिया इस सत्र के लिए इसी डिवाइस पर रहता है और घटना रिपोर्ट में जोड़ा जा सकता है।",
+settingsTitle:"सेटिंग्स",settingsPhone:"आपका फ़ोन नंबर",
+settingsPhoneNote:"आपदा मोड सक्रिय करने पर अधिकारियों के साथ स्वतः साझा किया जाएगा।",
+settingsLanguage:"भाषा",settingsGeminiKey:"Gemini API कुंजी (ऑनलाइन AI)",
+settingsGeminiNote:"केवल इस डिवाइस पर सहेजी जाती है। ऑनलाइन होने पर लाइव AI मार्गदर्शन के लिए उपयोग होती है।",
+settingsAIMode:"AI मोड",settingsAIOnline:"ऑनलाइन (Gemini)",settingsAIOffline:"ऑफ़लाइन (डिवाइस पर)",
+settingsOfflineNote:"ऑफ़लाइन मोड आपके अपने डिवाइस-मॉडल को कॉल करता है — इसे कोड में window.offlineAIModel.respond() पर जोड़ें।",
+settingsSave:"सेटिंग्स सहेजें",settingsClearData:"सभी स्थानीय डेटा हटाएँ",settingsClose:"बंद करें",
+onboardTitle:"LifeKeeper में आपका स्वागत है",
+onboardIntro:"कुछ जानकारी आपदा आने पर एक टैप में आपका नंबर व स्थान अधिकारियों तक पहुँचाने में मदद करेगी।",
+onboardName:"आपका नाम (वैकल्पिक)",onboardPhone:"आपका फ़ोन नंबर",
+onboardPhoneNote:"केवल आपदा मोड में अधिकारियों के साथ साझा करने के लिए उपयोग होगा।",onboardLanguage:"पसंदीदा भाषा",
+onboardContinue:"जारी रखें",onboardSkip:"अभी छोड़ें",
+micListening:"सुन रहा है…",micNotSupported:"इस ब्राउज़र में वॉइस कमांड समर्थित नहीं है।",
+micHeard:"सुना गया: \u201c{text}\u201d",
+typeSupply:"आपूर्ति की कमी",typeInjury:"चोट / चिकित्सा",typeStructural:"संरचनात्मक क्षति",typeMissing:"लापता व्यक्ति",typeOther:"अन्य",
+sevLow:"कम",sevMed:"मध्यम",sevHigh:"गंभीर",
+comAll:"सभी लोग",comMedical:"चिकित्सा",comEngineering:"इंजीनियरिंग",comCooking:"भोजन",comSecurity:"सुरक्षा",comLogistics:"रसद",
+hlEmergency:"राष्ट्रीय आपातकाल",hlAmbulance:"एम्बुलेंस",hlPolice:"पुलिस",hlFire:"अग्निशमन",hlDisaster:"आपदा प्रबंधन (NDMA)",hlWomen:"महिला हेल्पलाइन",hlChild:"बाल हेल्पलाइन"},
+
+ta:{brand:"LifeKeeper",statusOffline:"ஆஃப்லைன் · தரவு சாதனத்தில் சேமிக்கப்பட்டது",modeDaily:"தினசரி வாழ்க்கை",modeDisaster:"பேரிடர் பயன்முறை",
+navHome:"முகப்பு",navJournal:"நாட்குறிப்பு",navLog:"பதிவு",navChat:"அரட்டை",navMap:"வரைபடம்",navMedia:"மீடியா",
+disasterBanner:"பேரிடர் பயன்முறை இயங்குகிறது — உங்கள் எண்/இருப்பிடம் அனுப்பத் தயார்",
+homeJournalEntries:"நாட்குறிப்பு பதிவுகள்",homePeersNearby:"அருகிலுள்ளவர்கள்",
+homeAISummaryEmpty:"இன்னும் நாட்குறிப்பு பதிவு இல்லை. தொடங்க ஒன்றைச் சேர்க்கவும்.",
+homeAISummaryHas:"உங்கள் சேமிக்கப்பட்ட நாட்குறிப்புகள் இந்த சாதனத்தில் ஆஃப்லைனில் கிடைக்கும்.",
+btnNewJournal:"புதிய நாட்குறிப்பு",btnOpenChat:"நண்பர் அரட்டையைத் திற",btnSwitchDisaster:"பேரிடர் பயன்முறைக்கு மாறு",
+homeOpenIncidents:"திறந்த சம்பவங்கள்",homeAIGuidanceLoading:"சமீபத்திய வழிகாட்டுதலைப் பெறுகிறது…",
+btnLogIncident:"சம்பவத்தைப் பதிவு செய்",btnOpenMeshChat:"மெஷ் அரட்டை & சமூகங்களைத் திற",btnOpenMap:"வரைபடத்தைத் திற",
+btnExitDisaster:"பேரிடர் பயன்முறையிலிருந்து வெளியேறு",agencyNotified:"Riverside Relief Agency-க்கு தெரிவிக்கப்பட்டு இணைக்கப்பட்டது",
+helplineTitle:"அவசர உதவி எண்கள்",helplineNote:"நேரடியாக அழைக்க எண்ணைத் தட்டவும். மாநில பேரிடர் மேலாண்மை ஆணையத்துடன் உறுதி செய்யவும்.",
+locationTitle:"அதிகாரிகளுக்கு தயாராக உள்ள உங்கள் தகவல்",locationYourNumber:"உங்கள் எண்",locationYourLocation:"உங்கள் இருப்பிடம்",
+locationFetching:"இருப்பிடத்தைக் கண்டறிகிறது…",locationUnavailable:"இருப்பிடம் கிடைக்கவில்லை — அனுமதி வழங்கவும்",
+locationShareBtn:"பேரிடர் உதவி எண்ணுக்கு அனுப்பு",locationCopyBtn:"விவரங்களை நகலெடு",locationNoPhone:"அமைப்புகளில் உங்கள் தொலைபேசி எண்ணைச் சேர்க்கவும்",
+journalTitle:"தினசரி நாட்குறிப்பு",journalFieldLabel:"புதிய பதிவு",journalPlaceholder:"உங்கள் நாளைப் பற்றி எழுதுங்கள்...",
+journalSave:"நாட்குறிப்பைச் சேமி",journalEmpty:"உங்கள் சேமிக்கப்பட்ட பதிவுகள் இங்கே தோன்றும்.",
+incidentTitle:"சம்பவத்தைப் பதிவு செய்",incidentTypeLabel:"வகை",incidentSeverityLabel:"தீவிரம்",incidentNotesLabel:"குறிப்புகள்",
+incidentNotesPlaceholder:"சுருக்கமான விவரணை... அல்லது மைக்கைத் தட்டி பேசவும்",incidentSave:"சம்பவத்தைச் சேமி",
+incidentSaveNote:"சேமிக்கப்பட்ட சம்பவங்கள் இந்த சாதனத்தில் உள்ளூரில் உள்ளன, பின்னர் இணையவசதியுடன் ஒத்திசைக்கலாம்.",
+incidentRecent:"சமீபத்தியவை",incidentEmpty:"இதுவரை சம்பவங்கள் இல்லை.",incidentAttach:"மீடியாவிலிருந்து படம்/வீடியோ இணை",
+chatTitleDaily:"நண்பர் அரட்டை",chatTitleDisaster:"மெஷ் அரட்டை & சமூகங்கள்",chatPlaceholderDaily:"அருகிலுள்ளவர்களுக்கு செய்தி...",
+chatPlaceholderDisaster:"{community}-க்கு செய்தி...",chatSend:"அனுப்பு",chatPeersNearbyDaily:"அருகில் 3 பேர்",
+chatPeersConnected:"7 பேர் இணைந்துள்ளனர் — சமூகம்: {community}",
+chatCommunityNote:"சமூக பொத்தான்கள் செயலில் உள்ள வடிப்பான்கள். நிஜ பயன்பாட்டில் இதை WebSocket/WebRTC மெஷுடன் இணைக்கவும்.",
+mapTitleDaily:"அருகிலுள்ள வரைபடம்",mapTitleDisaster:"பேரிடர் மறுமொழி வரைபடம்",
+mapStatus:"உண்மையான சாலைகள், இடங்கள் மற்றும் செயற்கைக்கோள் அடுக்குகளுக்கு Google Maps பயன்படுத்தப்படுகிறது. இருப்பிட அனுமதி விருப்பத்தேர்வு.",
+btnLocateMe:"என் இருப்பிடம்",btnZoomIn:"பெரிதாக்கு",btnZoomOut:"சிறிதாக்கு",btnSatellite:"செயற்கைக்கோள் காட்சி",
+mediaTitle:"படங்கள் & வீடியோக்கள்",mediaAdd:"கேலரியிலிருந்து சேர்",mediaCapture:"கேமராவால் எடு",
+mediaEmpty:"இன்னும் படங்கள் அல்லது வீடியோக்கள் சேர்க்கப்படவில்லை.",mediaDelete:"நீக்கு",
+mediaNote:"மீடியா இந்த அமர்வுக்கு இந்த சாதனத்தில் இருக்கும், சம்பவ அறிக்கைகளுடன் இணைக்கலாம்.",
+settingsTitle:"அமைப்புகள்",settingsPhone:"உங்கள் தொலைபேசி எண்",
+settingsPhoneNote:"நீங்கள் பேரிடர் பயன்முறையை இயக்கும்போது அதிகாரிகளுடன் தானாக பகிரப்படும்.",
+settingsLanguage:"மொழி",settingsGeminiKey:"Gemini API விசை (ஆன்லைன் AI)",
+settingsGeminiNote:"இந்த சாதனத்தில் மட்டும் சேமிக்கப்படும். ஆன்லைனில் இருக்கும்போது நேரடி AI வழிகாட்டலுக்குப் பயன்படும்.",
+settingsAIMode:"AI பயன்முறை",settingsAIOnline:"ஆன்லைன் (Gemini)",settingsAIOffline:"ஆஃப்லைன் (சாதனத்தில்)",
+settingsOfflineNote:"ஆஃப்லைன் பயன்முறை உங்கள் சொந்த மாடலை அழைக்கிறது — window.offlineAIModel.respond() இல் இணைக்கவும்.",
+settingsSave:"அமைப்புகளைச் சேமி",settingsClearData:"அனைத்து உள்ளூர் தரவையும் அழி",settingsClose:"மூடு",
+onboardTitle:"LifeKeeper-க்கு வரவேற்கிறோம்",
+onboardIntro:"பேரிடர் ஏற்பட்டால் ஒரே தட்டலில் உங்கள் எண் & இருப்பிடத்தை அதிகாரிகளுக்கு அனுப்ப சில விவரங்கள் தேவை.",
+onboardName:"உங்கள் பெயர் (விருப்பம்)",onboardPhone:"உங்கள் தொலைபேசி எண்",
+onboardPhoneNote:"பேரிடர் பயன்முறையில் அதிகாரிகளுடன் பகிர மட்டுமே பயன்படுத்தப்படும்.",onboardLanguage:"விருப்ப மொழி",
+onboardContinue:"தொடரவும்",onboardSkip:"இப்போது தவிர்",
+micListening:"கேட்கிறது…",micNotSupported:"இந்த உலாவியில் குரல் கட்டளைகள் ஆதரிக்கப்படவில்லை.",
+micHeard:"கேட்டது: \u201c{text}\u201d",
+typeSupply:"பொருள் பற்றாக்குறை",typeInjury:"காயம் / மருத்துவம்",typeStructural:"கட்டமைப்பு சேதம்",typeMissing:"காணாமல் போனவர்",typeOther:"மற்றவை",
+sevLow:"குறைவு",sevMed:"நடுத்தரம்",sevHigh:"அதிகம்",
+comAll:"அனைவரும்",comMedical:"மருத்துவம்",comEngineering:"பொறியியல்",comCooking:"சமையல்",comSecurity:"பாதுகாப்பு",comLogistics:"தளவாடம்",
+hlEmergency:"தேசிய அவசரநிலை",hlAmbulance:"ஆம்புலன்ஸ்",hlPolice:"காவல்துறை",hlFire:"தீயணைப்பு",hlDisaster:"பேரிடர் மேலாண்மை (NDMA)",hlWomen:"மகளிர் உதவி எண்",hlChild:"குழந்தைகள் உதவி எண்"},
+
+te:{brand:"LifeKeeper",statusOffline:"ఆఫ్‌లైన్ · డేటా పరికరంలో సేవ్ చేయబడింది",modeDaily:"రోజువారీ జీవితం",modeDisaster:"విపత్తు మోడ్",
+navHome:"హోమ్",navJournal:"డైరీ",navLog:"లాగ్",navChat:"చాట్",navMap:"మ్యాప్",navMedia:"మీడియా",
+disasterBanner:"విపత్తు మోడ్ యాక్టివ్ — మీ నంబర్/లొకేషన్ పంపడానికి సిద్ధం",
+homeJournalEntries:"డైరీ ఎంట్రీలు",homePeersNearby:"సమీపంలోని వారు",
+homeAISummaryEmpty:"ఇంకా డైరీ ఎంట్రీలు లేవు. ప్రారంభించడానికి ఒకటి జోడించండి.",
+homeAISummaryHas:"మీ సేవ్ చేసిన డైరీ ఎంట్రీలు ఈ పరికరంలో ఆఫ్‌లైన్‌లో అందుబాటులో ఉన్నాయి.",
+btnNewJournal:"కొత్త డైరీ ఎంట్రీ",btnOpenChat:"పీర్ చాట్ తెరవండి",btnSwitchDisaster:"విపత్తు మోడ్‌కు మారండి",
+homeOpenIncidents:"తెరిచిన సంఘటనలు",homeAIGuidanceLoading:"తాజా మార్గదర్శకత్వం పొందుతోంది…",
+btnLogIncident:"సంఘటనను నమోదు చేయండి",btnOpenMeshChat:"మెష్ చాట్ & కమ్యూనిటీలు తెరవండి",btnOpenMap:"మ్యాప్ తెరవండి",
+btnExitDisaster:"విపత్తు మోడ్ నుండి నిష్క్రమించండి",agencyNotified:"రివర్‌సైడ్ రిలీఫ్ ఏజెన్సీకి తెలియజేయబడింది & అనుసంధానించబడింది",
+helplineTitle:"అత్యవసర హెల్ప్‌లైన్‌లు",helplineNote:"నేరుగా కాల్ చేయడానికి నంబర్‌ను నొక్కండి. స్థానిక నంబర్లను రాష్ట్ర విపత్తు నిర్వహణ అథారిటీతో నిర్ధారించుకోండి.",
+locationTitle:"అధికారుల కోసం సిద్ధంగా ఉన్న మీ సమాచారం",locationYourNumber:"మీ నంబర్",locationYourLocation:"మీ స్థానం",
+locationFetching:"మీ స్థానాన్ని కనుగొంటోంది…",locationUnavailable:"స్థానం అందుబాటులో లేదు — స్థాన అనుమతి ఇవ్వండి",
+locationShareBtn:"విపత్తు హెల్ప్‌లైన్‌కు పంపండి",locationCopyBtn:"వివరాలను కాపీ చేయండి",locationNoPhone:"సెట్టింగ్‌లలో మీ ఫోన్ నంబర్ జోడించండి",
+journalTitle:"రోజువారీ డైరీ",journalFieldLabel:"కొత్త ఎంట్రీ",journalPlaceholder:"మీ రోజు గురించి రాయండి...",
+journalSave:"డైరీ ఎంట్రీని సేవ్ చేయండి",journalEmpty:"మీ సేవ్ చేసిన ఎంట్రీలు ఇక్కడ కనిపిస్తాయి.",
+incidentTitle:"సంఘటనను నమోదు చేయండి",incidentTypeLabel:"రకం",incidentSeverityLabel:"తీవ్రత",incidentNotesLabel:"వివరాలు",
+incidentNotesPlaceholder:"సంక్షిప్త వివరణ... లేదా మాట్లాడటానికి మైక్‌ను నొక్కండి",incidentSave:"సంఘటనను సేవ్ చేయండి",
+incidentSaveNote:"సేవ్ చేసిన సంఘటనలు ఈ పరికరంలో స్థానికంగా ఉంటాయి, తరువాత బ్యాకెండ్‌తో సమకాలీకరించవచ్చు.",
+incidentRecent:"ఇటీవలివి",incidentEmpty:"ఇంకా సంఘటనలు నమోదు కాలేదు.",incidentAttach:"మీడియా నుండి ఫోటో/వీడియో జోడించండి",
+chatTitleDaily:"పీర్ చాట్",chatTitleDisaster:"మెష్ చాట్ & కమ్యూనిటీలు",chatPlaceholderDaily:"సమీపంలోని వారికి సందేశం...",
+chatPlaceholderDisaster:"{community}కు సందేశం...",chatSend:"పంపండి",chatPeersNearbyDaily:"సమీపంలో 3 మంది",
+chatPeersConnected:"7 మంది కనెక్ట్ అయ్యారు — కమ్యూనిటీ: {community}",
+chatCommunityNote:"కమ్యూనిటీ బటన్లు యాక్టివ్ ఫిల్టర్లు. నిజమైన అమలులో దీన్ని WebSocket/WebRTC మెష్‌తో కనెక్ట్ చేయండి.",
+mapTitleDaily:"సమీప మ్యాప్",mapTitleDisaster:"విపత్తు స్పందన మ్యాప్",
+mapStatus:"నిజమైన రోడ్లు, ప్రదేశాలు మరియు శాటిలైట్/మ్యాప్ లేయర్ల కోసం Google Maps ఉపయోగించబడుతుంది. స్థాన అనుమతి ఐచ్ఛికం.",
+btnLocateMe:"నా స్థానం",btnZoomIn:"జూమ్ ఇన్",btnZoomOut:"జూమ్ అవుట్",btnSatellite:"శాటిలైట్ వీక్షణ",
+mediaTitle:"ఫోటోలు & వీడియోలు",mediaAdd:"గ్యాలరీ నుండి జోడించండి",mediaCapture:"కెమెరాతో తీయండి",
+mediaEmpty:"ఇంకా ఫోటోలు లేదా వీడియోలు జోడించలేదు.",mediaDelete:"తొలగించండి",
+mediaNote:"మీడియా ఈ సెషన్ కోసం ఈ పరికరంలోనే ఉంటుంది, సంఘటన నివేదికలకు జోడించవచ్చు.",
+settingsTitle:"సెట్టింగ్‌లు",settingsPhone:"మీ ఫోన్ నంబర్",
+settingsPhoneNote:"మీరు విపత్తు మోడ్‌ను యాక్టివేట్ చేస్తే అధికారులతో ఆటోమేటిక్‌గా పంచుకోబడుతుంది.",
+settingsLanguage:"భాష",settingsGeminiKey:"Gemini API కీ (ఆన్‌లైన్ AI)",
+settingsGeminiNote:"ఈ పరికరంలో మాత్రమే సేవ్ చేయబడుతుంది. ఆన్‌లైన్‌లో ఉన్నప్పుడు లైవ్ AI మార్గదర్శకత్వం కోసం ఉపయోగించబడుతుంది.",
+settingsAIMode:"AI మోడ్",settingsAIOnline:"ఆన్‌లైన్ (Gemini)",settingsAIOffline:"ఆఫ్‌లైన్ (పరికరంలో)",
+settingsOfflineNote:"ఆఫ్‌లైన్ మోడ్ మీ సొంత ఆన్-డివైస్ మోడల్‌ను కాల్ చేస్తుంది — window.offlineAIModel.respond()లో కనెక్ట్ చేయండి.",
+settingsSave:"సెట్టింగ్‌లను సేవ్ చేయండి",settingsClearData:"అన్ని స్థానిక డేటాను క్లియర్ చేయండి",settingsClose:"మూసివేయండి",
+onboardTitle:"LifeKeeperకు స్వాగతం",
+onboardIntro:"విపత్తు వచ్చినప్పుడు ఒక్క నొక్కుతో మీ నంబర్ & స్థానాన్ని అధికారులకు పంపడానికి కొన్ని వివరాలు సహాయపడతాయి.",
+onboardName:"మీ పేరు (ఐచ్ఛికం)",onboardPhone:"మీ ఫోన్ నంబర్",
+onboardPhoneNote:"విపత్తు మోడ్‌లో అధికారులతో పంచుకోవడానికి మాత్రమే ఉపయోగించబడుతుంది.",onboardLanguage:"ఇష్టమైన భాష",
+onboardContinue:"కొనసాగించండి",onboardSkip:"ఇప్పుడు వదిలివేయండి",
+micListening:"వింటోంది…",micNotSupported:"ఈ బ్రౌజర్‌లో వాయిస్ కమాండ్‌లు మద్దతు లేవు.",
+micHeard:"విన్నది: \u201c{text}\u201d",
+typeSupply:"సరఫరా కొరత",typeInjury:"గాయం / వైద్యం",typeStructural:"నిర్మాణ నష్టం",typeMissing:"తప్పిపోయిన వ్యక్తి",typeOther:"ఇతరం",
+sevLow:"తక్కువ",sevMed:"మధ్యస్థం",sevHigh:"అధికం",
+comAll:"అందరూ",comMedical:"వైద్యం",comEngineering:"ఇంజనీరింగ్",comCooking:"వంట",comSecurity:"భద్రత",comLogistics:"లాజిస్టిక్స్",
+hlEmergency:"జాతీయ అత్యవసరం",hlAmbulance:"అంబులెన్స్",hlPolice:"పోలీసు",hlFire:"అగ్నిమాపక",hlDisaster:"విపత్తు నిర్వహణ (NDMA)",hlWomen:"మహిళా హెల్ప్‌లైన్",hlChild:"చైల్డ్ హెల్ప్‌లైన్"},
+
+kn:{brand:"LifeKeeper",statusOffline:"ಆಫ್‌ಲೈನ್ · ಡೇಟಾ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ",modeDaily:"ದೈನಂದಿನ ಜೀವನ",modeDisaster:"ವಿಪತ್ತು ಮೋಡ್",
+navHome:"ಮುಖಪುಟ",navJournal:"ದಿನಚರಿ",navLog:"ಲಾಗ್",navChat:"ಚಾಟ್",navMap:"ನಕ್ಷೆ",navMedia:"ಮಾಧ್ಯಮ",
+disasterBanner:"ವಿಪತ್ತು ಮೋಡ್ ಸಕ್ರಿಯ — ನಿಮ್ಮ ಸಂಖ್ಯೆ/ಸ್ಥಳ ಕಳುಹಿಸಲು ಸಿದ್ಧ",
+homeJournalEntries:"ದಿನಚರಿ ನಮೂದುಗಳು",homePeersNearby:"ಹತ್ತಿರದವರು",
+homeAISummaryEmpty:"ಇನ್ನೂ ದಿನಚರಿ ನಮೂದುಗಳಿಲ್ಲ. ಪ್ರಾರಂಭಿಸಲು ಒಂದನ್ನು ಸೇರಿಸಿ.",
+homeAISummaryHas:"ನಿಮ್ಮ ಉಳಿಸಿದ ದಿನಚರಿ ನಮೂದುಗಳು ಈ ಸಾಧನದಲ್ಲಿ ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಲಭ್ಯವಿದೆ.",
+btnNewJournal:"ಹೊಸ ದಿನಚರಿ ನಮೂದು",btnOpenChat:"ಪೀರ್ ಚಾಟ್ ತೆರೆಯಿರಿ",btnSwitchDisaster:"ವಿಪತ್ತು ಮೋಡ್‌ಗೆ ಬದಲಿಸಿ",
+homeOpenIncidents:"ತೆರೆದ ಘಟನೆಗಳು",homeAIGuidanceLoading:"ಇತ್ತೀಚಿನ ಮಾರ್ಗದರ್ಶನ ಪಡೆಯಲಾಗುತ್ತಿದೆ…",
+btnLogIncident:"ಘಟನೆಯನ್ನು ದಾಖಲಿಸಿ",btnOpenMeshChat:"ಮೆಶ್ ಚಾಟ್ & ಸಮುದಾಯಗಳನ್ನು ತೆರೆಯಿರಿ",btnOpenMap:"ನಕ್ಷೆ ತೆರೆಯಿರಿ",
+btnExitDisaster:"ವಿಪತ್ತು ಮೋಡ್‌ನಿಂದ ನಿರ್ಗಮಿಸಿ",agencyNotified:"ರಿವರ್‌ಸೈಡ್ ರಿಲೀಫ್ ಏಜೆನ್ಸಿಗೆ ಸೂಚಿಸಲಾಗಿದೆ & ಸಂಪರ್ಕಿಸಲಾಗಿದೆ",
+helplineTitle:"ತುರ್ತು ಸಹಾಯವಾಣಿಗಳು",helplineNote:"ನೇರವಾಗಿ ಕರೆ ಮಾಡಲು ಸಂಖ್ಯೆಯನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ. ಸ್ಥಳೀಯ ಸಂಖ್ಯೆಗಳನ್ನು ರಾಜ್ಯ ವಿಪತ್ತು ನಿರ್ವಹಣಾ ಪ್ರಾಧಿಕಾರದೊಂದಿಗೆ ಖಚಿತಪಡಿಸಿ.",
+locationTitle:"ಅಧಿಕಾರಿಗಳಿಗೆ ಸಿದ್ಧವಿರುವ ನಿಮ್ಮ ಮಾಹಿತಿ",locationYourNumber:"ನಿಮ್ಮ ಸಂಖ್ಯೆ",locationYourLocation:"ನಿಮ್ಮ ಸ್ಥಳ",
+locationFetching:"ನಿಮ್ಮ ಸ್ಥಳ ಪತ್ತೆ ಮಾಡಲಾಗುತ್ತಿದೆ…",locationUnavailable:"ಸ್ಥಳ ಲಭ್ಯವಿಲ್ಲ — ಸ್ಥಳ ಅನುಮತಿ ನೀಡಿ",
+locationShareBtn:"ವಿಪತ್ತು ಸಹಾಯವಾಣಿಗೆ ಕಳುಹಿಸಿ",locationCopyBtn:"ವಿವರಗಳನ್ನು ನಕಲಿಸಿ",locationNoPhone:"ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ನಿಮ್ಮ ಫೋನ್ ಸಂಖ್ಯೆ ಸೇರಿಸಿ",
+journalTitle:"ದೈನಂದಿನ ದಿನಚರಿ",journalFieldLabel:"ಹೊಸ ನಮೂದು",journalPlaceholder:"ನಿಮ್ಮ ದಿನದ ಬಗ್ಗೆ ಬರೆಯಿರಿ...",
+journalSave:"ದಿನಚರಿ ನಮೂದನ್ನು ಉಳಿಸಿ",journalEmpty:"ನಿಮ್ಮ ಉಳಿಸಿದ ನಮೂದುಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ.",
+incidentTitle:"ಘಟನೆಯನ್ನು ದಾಖಲಿಸಿ",incidentTypeLabel:"ಪ್ರಕಾರ",incidentSeverityLabel:"ತೀವ್ರತೆ",incidentNotesLabel:"ಟಿಪ್ಪಣಿಗಳು",
+incidentNotesPlaceholder:"ಸಂಕ್ಷಿಪ್ತ ವಿವರಣೆ... ಅಥವಾ ಮಾತನಾಡಲು ಮೈಕ್ ಟ್ಯಾಪ್ ಮಾಡಿ",incidentSave:"ಘಟನೆಯನ್ನು ಉಳಿಸಿ",
+incidentSaveNote:"ಉಳಿಸಿದ ಘಟನೆಗಳು ಈ ಸಾಧನದಲ್ಲಿ ಸ್ಥಳೀಯವಾಗಿ ಉಳಿಯುತ್ತವೆ, ನಂತರ ಬ್ಯಾಕೆಂಡ್‌ನೊಂದಿಗೆ ಸಿಂಕ್ ಮಾಡಬಹುದು.",
+incidentRecent:"ಇತ್ತೀಚಿನವು",incidentEmpty:"ಇನ್ನೂ ಘಟನೆಗಳು ದಾಖಲಾಗಿಲ್ಲ.",incidentAttach:"ಮಾಧ್ಯಮದಿಂದ ಫೋಟೋ/ವೀಡಿಯೊ ಲಗತ್ತಿಸಿ",
+chatTitleDaily:"ಪೀರ್ ಚಾಟ್",chatTitleDisaster:"ಮೆಶ್ ಚಾಟ್ & ಸಮುದಾಯಗಳು",chatPlaceholderDaily:"ಹತ್ತಿರದವರಿಗೆ ಸಂದೇಶ...",
+chatPlaceholderDisaster:"{community}ಗೆ ಸಂದೇಶ...",chatSend:"ಕಳುಹಿಸಿ",chatPeersNearbyDaily:"ಹತ್ತಿರ 3 ಜನ",
+chatPeersConnected:"7 ಜನ ಸಂಪರ್ಕಗೊಂಡಿದ್ದಾರೆ — ಸಮುದಾಯ: {community}",
+chatCommunityNote:"ಸಮುದಾಯ ಬಟನ್‌ಗಳು ಸಕ್ರಿಯ ಫಿಲ್ಟರ್‌ಗಳಾಗಿವೆ. ನಿಜವಾದ ಬಳಕೆಯಲ್ಲಿ ಇದನ್ನು WebSocket/WebRTC ಮೆಶ್‌ಗೆ ಸಂಪರ್ಕಿಸಿ.",
+mapTitleDaily:"ಹತ್ತಿರದ ನಕ್ಷೆ",mapTitleDisaster:"ವಿಪತ್ತು ಪ್ರತಿಕ್ರಿಯೆ ನಕ್ಷೆ",
+mapStatus:"ನಿಜವಾದ ರಸ್ತೆಗಳು, ಸ್ಥಳಗಳು ಮತ್ತು ಸ್ಯಾಟಲೈಟ್/ನಕ್ಷೆ ಪದರಗಳಿಗಾಗಿ Google Maps ಬಳಸಲಾಗುತ್ತದೆ. ಸ್ಥಳ ಅನುಮತಿ ಐಚ್ಛಿಕ.",
+btnLocateMe:"ನನ್ನ ಸ್ಥಳ",btnZoomIn:"ಝೂಮ್ ಇನ್",btnZoomOut:"ಝೂಮ್ ಔಟ್",btnSatellite:"ಸ್ಯಾಟಲೈಟ್ ನೋಟ",
+mediaTitle:"ಫೋಟೋಗಳು & ವೀಡಿಯೊಗಳು",mediaAdd:"ಗ್ಯಾಲರಿಯಿಂದ ಸೇರಿಸಿ",mediaCapture:"ಕ್ಯಾಮೆರಾದಿಂದ ತೆಗೆಯಿರಿ",
+mediaEmpty:"ಇನ್ನೂ ಫೋಟೋ ಅಥವಾ ವೀಡಿಯೊ ಸೇರಿಸಿಲ್ಲ.",mediaDelete:"ಅಳಿಸಿ",
+mediaNote:"ಮಾಧ್ಯಮವು ಈ ಸೆಷನ್‌ಗಾಗಿ ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಯುತ್ತದೆ, ಘಟನೆ ವರದಿಗಳಿಗೆ ಲಗತ್ತಿಸಬಹುದು.",
+settingsTitle:"ಸೆಟ್ಟಿಂಗ್‌ಗಳು",settingsPhone:"ನಿಮ್ಮ ಫೋನ್ ಸಂಖ್ಯೆ",
+settingsPhoneNote:"ನೀವು ವಿಪತ್ತು ಮೋಡ್ ಸಕ್ರಿಯಗೊಳಿಸಿದರೆ ಅಧಿಕಾರಿಗಳೊಂದಿಗೆ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತದೆ.",
+settingsLanguage:"ಭಾಷೆ",settingsGeminiKey:"Gemini API ಕೀ (ಆನ್‌ಲೈನ್ AI)",
+settingsGeminiNote:"ಈ ಸಾಧನದಲ್ಲಿ ಮಾತ್ರ ಉಳಿಸಲಾಗುತ್ತದೆ. ಆನ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದಾಗ ಲೈವ್ AI ಮಾರ್ಗದರ್ಶನಕ್ಕಾಗಿ ಬಳಸಲಾಗುತ್ತದೆ.",
+settingsAIMode:"AI ಮೋಡ್",settingsAIOnline:"ಆನ್‌ಲೈನ್ (Gemini)",settingsAIOffline:"ಆಫ್‌ಲೈನ್ (ಸಾಧನದಲ್ಲಿ)",
+settingsOfflineNote:"ಆಫ್‌ಲೈನ್ ಮೋಡ್ ನಿಮ್ಮ ಸ್ವಂತ ಆನ್-ಡಿವೈಸ್ ಮಾದರಿಯನ್ನು ಕರೆಯುತ್ತದೆ — window.offlineAIModel.respond()ನಲ್ಲಿ ಸಂಪರ್ಕಿಸಿ.",
+settingsSave:"ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಉಳಿಸಿ",settingsClearData:"ಎಲ್ಲಾ ಸ್ಥಳೀಯ ಡೇಟಾ ಅಳಿಸಿ",settingsClose:"ಮುಚ್ಚಿ",
+onboardTitle:"LifeKeeperಗೆ ಸ್ವಾಗತ",
+onboardIntro:"ವಿಪತ್ತು ಸಂಭವಿಸಿದಾಗ ಒಂದೇ ಟ್ಯಾಪ್‌ನಲ್ಲಿ ನಿಮ್ಮ ಸಂಖ್ಯೆ & ಸ್ಥಳವನ್ನು ಅಧಿಕಾರಿಗಳಿಗೆ ಕಳುಹಿಸಲು ಕೆಲವು ವಿವರಗಳು ಸಹಾಯ ಮಾಡುತ್ತವೆ.",
+onboardName:"ನಿಮ್ಮ ಹೆಸರು (ಐಚ್ಛಿಕ)",onboardPhone:"ನಿಮ್ಮ ಫೋನ್ ಸಂಖ್ಯೆ",
+onboardPhoneNote:"ವಿಪತ್ತು ಮೋಡ್‌ನಲ್ಲಿ ಅಧಿಕಾರಿಗಳೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಲು ಮಾತ್ರ ಬಳಸಲಾಗುತ್ತದೆ.",onboardLanguage:"ಆದ್ಯತೆಯ ಭಾಷೆ",
+onboardContinue:"ಮುಂದುವರಿಸಿ",onboardSkip:"ಈಗ ಬಿಟ್ಟುಬಿಡಿ",
+micListening:"ಕೇಳುತ್ತಿದೆ…",micNotSupported:"ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಧ್ವನಿ ಆದೇಶಗಳು ಬೆಂಬಲಿತವಾಗಿಲ್ಲ.",
+micHeard:"ಕೇಳಿಸಿದ್ದು: \u201c{text}\u201d",
+typeSupply:"ಸರಬರಾಜು ಕೊರತೆ",typeInjury:"ಗಾಯ / ವೈದ್ಯಕೀಯ",typeStructural:"ರಚನಾತ್ಮಕ ಹಾನಿ",typeMissing:"ಕಾಣೆಯಾದ ವ್ಯಕ್ತಿ",typeOther:"ಇತರೆ",
+sevLow:"ಕಡಿಮೆ",sevMed:"ಮಧ್ಯಮ",sevHigh:"ಹೆಚ್ಚು",
+comAll:"ಎಲ್ಲರೂ",comMedical:"ವೈದ್ಯಕೀಯ",comEngineering:"ಎಂಜಿನಿಯರಿಂಗ್",comCooking:"ಅಡುಗೆ",comSecurity:"ಭದ್ರತೆ",comLogistics:"ಲಾಜಿಸ್ಟಿಕ್ಸ್",
+hlEmergency:"ರಾಷ್ಟ್ರೀಯ ತುರ್ತು",hlAmbulance:"ಆಂಬ್ಯುಲೆನ್ಸ್",hlPolice:"ಪೊಲೀಸ್",hlFire:"ಅಗ್ನಿಶಾಮಕ",hlDisaster:"ವಿಪತ್ತು ನಿರ್ವಹಣೆ (NDMA)",hlWomen:"ಮಹಿಳಾ ಸಹಾಯವಾಣಿ",hlChild:"ಮಕ್ಕಳ ಸಹಾಯವಾಣಿ"},
+
+ml:{brand:"LifeKeeper",statusOffline:"ഓഫ്‌ലൈൻ · ഡാറ്റ ഉപകരണത്തിൽ സേവ് ചെയ്തു",modeDaily:"ദൈനംദിന ജീവിതം",modeDisaster:"ദുരന്ത മോഡ്",
+navHome:"ഹോം",navJournal:"ഡയറി",navLog:"ലോഗ്",navChat:"ചാറ്റ്",navMap:"മാപ്പ്",navMedia:"മീഡിയ",
+disasterBanner:"ദുരന്ത മോഡ് സജീവം — നിങ്ങളുടെ നമ്പറും സ്ഥലവും അയക്കാൻ തയ്യാർ",
+homeJournalEntries:"ഡയറി എൻട്രികൾ",homePeersNearby:"സമീപമുള്ളവർ",
+homeAISummaryEmpty:"ഇതുവരെ ഡയറി എൻട്രികൾ ഇല്ല. തുടങ്ങാൻ ഒന്ന് ചേർക്കുക.",
+homeAISummaryHas:"നിങ്ങളുടെ സേവ് ചെയ്ത ഡയറി എൻട്രികൾ ഈ ഉപകരണത്തിൽ ഓഫ്‌ലൈനിൽ ലഭ്യമാണ്.",
+btnNewJournal:"പുതിയ ഡയറി എൻട്രി",btnOpenChat:"പിയർ ചാറ്റ് തുറക്കുക",btnSwitchDisaster:"ദുരന്ത മോഡിലേക്ക് മാറുക",
+homeOpenIncidents:"തുറന്ന സംഭവങ്ങൾ",homeAIGuidanceLoading:"ഏറ്റവും പുതിയ മാർഗ്ഗനിർദ്ദേശം ലഭിക്കുന്നു…",
+btnLogIncident:"സംഭവം രേഖപ്പെടുത്തുക",btnOpenMeshChat:"മെഷ് ചാറ്റ് & കമ്മ്യൂണിറ്റികൾ തുറക്കുക",btnOpenMap:"മാപ്പ് തുറക്കുക",
+btnExitDisaster:"ദുരന്ത മോഡിൽ നിന്ന് പുറത്തുകടക്കുക",agencyNotified:"റിവർസൈഡ് റിലീഫ് ഏജൻസിയെ അറിയിച്ചു & ബന്ധിപ്പിച്ചു",
+helplineTitle:"അടിയന്തര ഹെൽപ്പ്‌ലൈനുകൾ",helplineNote:"നേരിട്ട് വിളിക്കാൻ നമ്പറിൽ ടാപ്പ് ചെയ്യുക. പ്രാദേശിക നമ്പറുകൾ സംസ്ഥാന ദുരന്ത നിവാരണ അതോറിറ്റിയുമായി സ്ഥിരീകരിക്കുക.",
+locationTitle:"അധികാരികൾക്കായി തയ്യാറായ നിങ്ങളുടെ വിവരങ്ങൾ",locationYourNumber:"നിങ്ങളുടെ നമ്പർ",locationYourLocation:"നിങ്ങളുടെ സ്ഥലം",
+locationFetching:"നിങ്ങളുടെ സ്ഥലം കണ്ടെത്തുന്നു…",locationUnavailable:"സ്ഥലം ലഭ്യമല്ല — സ്ഥാന അനുമതി നൽകുക",
+locationShareBtn:"ദുരന്ത ഹെൽപ്പ്‌ലൈനിലേക്ക് അയക്കുക",locationCopyBtn:"വിവരങ്ങൾ പകർത്തുക",locationNoPhone:"ക്രമീകരണങ്ങളിൽ നിങ്ങളുടെ ഫോൺ നമ്പർ ചേർക്കുക",
+journalTitle:"ദൈനംദിന ഡയറി",journalFieldLabel:"പുതിയ എൻട്രി",journalPlaceholder:"നിങ്ങളുടെ ദിവസത്തെക്കുറിച്ച് എഴുതുക...",
+journalSave:"ഡയറി എൻട്രി സേവ് ചെയ്യുക",journalEmpty:"നിങ്ങളുടെ സേവ് ചെയ്ത എൻട്രികൾ ഇവിടെ കാണിക്കും.",
+incidentTitle:"സംഭവം രേഖപ്പെടുത്തുക",incidentTypeLabel:"തരം",incidentSeverityLabel:"തീവ്രത",incidentNotesLabel:"കുറിപ്പുകൾ",
+incidentNotesPlaceholder:"ഹ്രസ്വ വിവരണം... അല്ലെങ്കിൽ സംസാരിക്കാൻ മൈക്ക് ടാപ്പ് ചെയ്യുക",incidentSave:"സംഭവം സേവ് ചെയ്യുക",
+incidentSaveNote:"സേവ് ചെയ്ത സംഭവങ്ങൾ ഈ ഉപകരണത്തിൽ പ്രാദേശികമായി നിലനിൽക്കും, പിന്നീട് ബാക്കെൻഡുമായി സമന്വയിപ്പിക്കാം.",
+incidentRecent:"സമീപകാലത്തെ",incidentEmpty:"ഇതുവരെ സംഭവങ്ങൾ രേഖപ്പെടുത്തിയിട്ടില്ല.",incidentAttach:"മീഡിയയിൽ നിന്ന് ഫോട്ടോ/വീഡിയോ ചേർക്കുക",
+chatTitleDaily:"പിയർ ചാറ്റ്",chatTitleDisaster:"മെഷ് ചാറ്റ് & കമ്മ്യൂണിറ്റികൾ",chatPlaceholderDaily:"സമീപമുള്ളവർക്ക് സന്ദേശം...",
+chatPlaceholderDisaster:"{community}ന് സന്ദേശം...",chatSend:"അയക്കുക",chatPeersNearbyDaily:"സമീപം 3 പേർ",
+chatPeersConnected:"7 പേർ ബന്ധിപ്പിച്ചിരിക്കുന്നു — കമ്മ്യൂണിറ്റി: {community}",
+chatCommunityNote:"കമ്മ്യൂണിറ്റി ബട്ടണുകൾ സജീവ ഫിൽട്ടറുകളാണ്. യഥാർത്ഥ വിന്യാസത്തിൽ ഇത് WebSocket/WebRTC മെഷുമായി ബന്ധിപ്പിക്കുക.",
+mapTitleDaily:"സമീപ മാപ്പ്",mapTitleDisaster:"ദുരന്ത പ്രതികരണ മാപ്പ്",
+mapStatus:"യഥാർത്ഥ റോഡുകൾ, സ്ഥലങ്ങൾ, സാറ്റലൈറ്റ്/മാപ്പ് ലെയറുകൾക്കായി Google Maps ഉപയോഗിക്കുന്നു. സ്ഥാന അനുമതി ഓപ്ഷണലാണ്.",
+btnLocateMe:"എന്റെ സ്ഥലം",btnZoomIn:"സൂം ഇൻ",btnZoomOut:"സൂം ഔട്ട്",btnSatellite:"സാറ്റലൈറ്റ് കാഴ്ച",
+mediaTitle:"ഫോട്ടോകളും വീഡിയോകളും",mediaAdd:"ഗാലറിയിൽ നിന്ന് ചേർക്കുക",mediaCapture:"ക്യാമറ ഉപയോഗിച്ച് പകർത്തുക",
+mediaEmpty:"ഇതുവരെ ഫോട്ടോകളോ വീഡിയോകളോ ചേർത്തിട്ടില്ല.",mediaDelete:"ഇല്ലാതാക്കുക",
+mediaNote:"മീഡിയ ഈ സെഷനായി ഈ ഉപകരണത്തിൽ നിലനിൽക്കും, സംഭവ റിപ്പോർട്ടുകളിൽ ചേർക്കാം.",
+settingsTitle:"ക്രമീകരണങ്ങൾ",settingsPhone:"നിങ്ങളുടെ ഫോൺ നമ്പർ",
+settingsPhoneNote:"നിങ്ങൾ ദുരന്ത മോഡ് സജീവമാക്കിയാൽ അധികാരികളുമായി യാന്ത്രികമായി പങ്കിടും.",
+settingsLanguage:"ഭാഷ",settingsGeminiKey:"Gemini API കീ (ഓൺലൈൻ AI)",
+settingsGeminiNote:"ഈ ഉപകരണത്തിൽ മാത്രം സൂക്ഷിക്കുന്നു. ഓൺലൈനിൽ ആയിരിക്കുമ്പോൾ തത്സമയ AI മാർഗ്ഗനിർദ്ദേശത്തിനായി ഉപയോഗിക്കുന്നു.",
+settingsAIMode:"AI മോഡ്",settingsAIOnline:"ഓൺലൈൻ (Gemini)",settingsAIOffline:"ഓഫ്‌ലൈൻ (ഉപകരണത്തിൽ)",
+settingsOfflineNote:"ഓഫ്‌ലൈൻ മോഡ് നിങ്ങളുടെ സ്വന്തം ഓൺ-ഡിവൈസ് മോഡലിനെ വിളിക്കുന്നു — window.offlineAIModel.respond()ൽ ബന്ധിപ്പിക്കുക.",
+settingsSave:"ക്രമീകരണങ്ങൾ സേവ് ചെയ്യുക",settingsClearData:"എല്ലാ പ്രാദേശിക ഡാറ്റയും മായ്ക്കുക",settingsClose:"അടയ്ക്കുക",
+onboardTitle:"LifeKeeperലേക്ക് സ്വാഗതം",
+onboardIntro:"ദുരന്തമുണ്ടായാൽ ഒറ്റ ടാപ്പിൽ നിങ്ങളുടെ നമ്പറും സ്ഥലവും അധികാരികൾക്ക് അയക്കാൻ ചില വിവരങ്ങൾ സഹായിക്കും.",
+onboardName:"നിങ്ങളുടെ പേര് (ഓപ്ഷണൽ)",onboardPhone:"നിങ്ങളുടെ ഫോൺ നമ്പർ",
+onboardPhoneNote:"ദുരന്ത മോഡിൽ അധികാരികളുമായി പങ്കിടാൻ മാത്രം ഉപയോഗിക്കും.",onboardLanguage:"ഇഷ്ട ഭാഷ",
+onboardContinue:"തുടരുക",onboardSkip:"ഇപ്പോൾ ഒഴിവാക്കുക",
+micListening:"കേൾക്കുന്നു…",micNotSupported:"ഈ ബ്രൗസറിൽ വോയ്‌സ് കമാൻഡുകൾ പിന്തുണയ്ക്കുന്നില്ല.",
+micHeard:"കേട്ടത്: \u201c{text}\u201d",
+typeSupply:"സാധന ക്ഷാമം",typeInjury:"പരിക്ക് / വൈദ്യസഹായം",typeStructural:"ഘടനാപരമായ നാശം",typeMissing:"കാണാതായ വ്യക്തി",typeOther:"മറ്റുള്ളവ",
+sevLow:"കുറവ്",sevMed:"ഇടത്തരം",sevHigh:"ഉയർന്നത്",
+comAll:"എല്ലാവരും",comMedical:"വൈദ്യം",comEngineering:"എഞ്ചിനീയറിംഗ്",comCooking:"പാചകം",comSecurity:"സുരക്ഷ",comLogistics:"ലോജിസ്റ്റിക്സ്",
+hlEmergency:"ദേശീയ അടിയന്തരം",hlAmbulance:"ആംബുലൻസ്",hlPolice:"പോലീസ്",hlFire:"അഗ്നിശമനം",hlDisaster:"ദുരന്ത നിവാരണം (NDMA)",hlWomen:"വനിതാ ഹെൽപ്പ്‌ലൈൻ",hlChild:"ശിശു ഹെൽപ്പ്‌ലൈൻ"},
+
+bn:{brand:"LifeKeeper",statusOffline:"অফলাইন · ডেটা ডিভাইসে সংরক্ষিত",modeDaily:"দৈনন্দিন জীবন",modeDisaster:"দুর্যোগ মোড",
+navHome:"হোম",navJournal:"ডায়েরি",navLog:"লগ",navChat:"চ্যাট",navMap:"মানচিত্র",navMedia:"মিডিয়া",
+disasterBanner:"দুর্যোগ মোড সক্রিয় — আপনার নম্বর ও অবস্থান পাঠাতে প্রস্তুত",
+homeJournalEntries:"ডায়েরি এন্ট্রি",homePeersNearby:"কাছাকাছি মানুষ",
+homeAISummaryEmpty:"এখনো কোনো ডায়েরি এন্ট্রি নেই। শুরু করতে একটি যোগ করুন।",
+homeAISummaryHas:"আপনার সংরক্ষিত ডায়েরি এন্ট্রিগুলি এই ডিভাইসে অফলাইনে উপলব্ধ।",
+btnNewJournal:"নতুন ডায়েরি এন্ট্রি",btnOpenChat:"পিয়ার চ্যাট খুলুন",btnSwitchDisaster:"দুর্যোগ মোডে যান",
+homeOpenIncidents:"খোলা ঘটনা",homeAIGuidanceLoading:"সর্বশেষ নির্দেশনা আনা হচ্ছে…",
+btnLogIncident:"ঘটনা লগ করুন",btnOpenMeshChat:"মেশ চ্যাট ও কমিউনিটি খুলুন",btnOpenMap:"মানচিত্র খুলুন",
+btnExitDisaster:"দুর্যোগ মোড থেকে বেরিয়ে আসুন",agencyNotified:"রিভারসাইড রিলিফ এজেন্সিকে জানানো ও সংযুক্ত করা হয়েছে",
+helplineTitle:"জরুরি হেল্পলাইন",helplineNote:"সরাসরি কল করতে নম্বরে ট্যাপ করুন। স্থানীয় নম্বর রাজ্য দুর্যোগ ব্যবস্থাপনা কর্তৃপক্ষের সাথে যাচাই করুন।",
+locationTitle:"কর্তৃপক্ষের জন্য প্রস্তুত আপনার তথ্য",locationYourNumber:"আপনার নম্বর",locationYourLocation:"আপনার অবস্থান",
+locationFetching:"আপনার অবস্থান খুঁজছে…",locationUnavailable:"অবস্থান উপলব্ধ নয় — অবস্থানের অনুমতি দিন",
+locationShareBtn:"দুর্যোগ হেল্পলাইনে পাঠান",locationCopyBtn:"বিবরণ কপি করুন",locationNoPhone:"সেটিংসে আপনার ফোন নম্বর যোগ করুন",
+journalTitle:"দৈনিক ডায়েরি",journalFieldLabel:"নতুন এন্ট্রি",journalPlaceholder:"আপনার দিন সম্পর্কে লিখুন...",
+journalSave:"ডায়েরি এন্ট্রি সংরক্ষণ করুন",journalEmpty:"আপনার সংরক্ষিত এন্ট্রিগুলি এখানে দেখাবে।",
+incidentTitle:"ঘটনা লগ করুন",incidentTypeLabel:"ধরন",incidentSeverityLabel:"তীব্রতা",incidentNotesLabel:"নোট",
+incidentNotesPlaceholder:"সংক্ষিপ্ত বিবরণ... অথবা বলতে মাইক ট্যাপ করুন",incidentSave:"ঘটনা সংরক্ষণ করুন",
+incidentSaveNote:"সংরক্ষিত ঘটনাগুলি এই ডিভাইসে স্থানীয়ভাবে থাকে, পরে ব্যাকএন্ডের সাথে সিঙ্ক করা যেতে পারে।",
+incidentRecent:"সাম্প্রতিক",incidentEmpty:"এখনো কোনো ঘটনা সংরক্ষিত হয়নি।",incidentAttach:"মিডিয়া থেকে ছবি/ভিডিও যুক্ত করুন",
+chatTitleDaily:"পিয়ার চ্যাট",chatTitleDisaster:"মেশ চ্যাট ও কমিউনিটি",chatPlaceholderDaily:"কাছাকাছি মানুষদের বার্তা...",
+chatPlaceholderDisaster:"{community}কে বার্তা...",chatSend:"পাঠান",chatPeersNearbyDaily:"কাছাকাছি ৩ জন",
+chatPeersConnected:"৭ জন সংযুক্ত — কমিউনিটি: {community}",
+chatCommunityNote:"কমিউনিটি বোতামগুলি সক্রিয় ফিল্টার। বাস্তব ব্যবহারে এটি WebSocket/WebRTC মেশের সাথে সংযুক্ত করুন।",
+mapTitleDaily:"কাছাকাছি মানচিত্র",mapTitleDisaster:"দুর্যোগ প্রতিক্রিয়া মানচিত্র",
+mapStatus:"আসল রাস্তা, স্থান এবং স্যাটেলাইট/মানচিত্র লেয়ারের জন্য Google Maps ব্যবহার করা হয়। অবস্থানের অনুমতি ঐচ্ছিক।",
+btnLocateMe:"আমার অবস্থান",btnZoomIn:"জুম ইন",btnZoomOut:"জুম আউট",btnSatellite:"স্যাটেলাইট ভিউ",
+mediaTitle:"ছবি ও ভিডিও",mediaAdd:"গ্যালারি থেকে যোগ করুন",mediaCapture:"ক্যামেরা দিয়ে তুলুন",
+mediaEmpty:"এখনো কোনো ছবি বা ভিডিও যোগ করা হয়নি।",mediaDelete:"মুছুন",
+mediaNote:"মিডিয়া এই সেশনের জন্য এই ডিভাইসে থাকে, ঘটনা রিপোর্টে যুক্ত করা যেতে পারে।",
+settingsTitle:"সেটিংস",settingsPhone:"আপনার ফোন নম্বর",
+settingsPhoneNote:"আপনি দুর্যোগ মোড সক্রিয় করলে কর্তৃপক্ষের সাথে স্বয়ংক্রিয়ভাবে শেয়ার করা হবে।",
+settingsLanguage:"ভাষা",settingsGeminiKey:"Gemini API কী (অনলাইন AI)",
+settingsGeminiNote:"শুধুমাত্র এই ডিভাইসে সংরক্ষিত। অনলাইনে থাকাকালীন লাইভ AI নির্দেশনার জন্য ব্যবহৃত হয়।",
+settingsAIMode:"AI মোড",settingsAIOnline:"অনলাইন (Gemini)",settingsAIOffline:"অফলাইন (ডিভাইসে)",
+settingsOfflineNote:"অফলাইন মোড আপনার নিজস্ব অন-ডিভাইস মডেল কল করে — কোডে window.offlineAIModel.respond()-এ যুক্ত করুন।",
+settingsSave:"সেটিংস সংরক্ষণ করুন",settingsClearData:"সমস্ত স্থানীয় ডেটা মুছুন",settingsClose:"বন্ধ করুন",
+onboardTitle:"LifeKeeper-এ স্বাগতম",
+onboardIntro:"দুর্যোগ এলে এক ট্যাপে আপনার নম্বর ও অবস্থান কর্তৃপক্ষের কাছে পাঠাতে কিছু তথ্য সাহায্য করবে।",
+onboardName:"আপনার নাম (ঐচ্ছিক)",onboardPhone:"আপনার ফোন নম্বর",
+onboardPhoneNote:"শুধুমাত্র দুর্যোগ মোডে কর্তৃপক্ষের সাথে শেয়ার করতে ব্যবহৃত হবে।",onboardLanguage:"পছন্দের ভাষা",
+onboardContinue:"চালিয়ে যান",onboardSkip:"এখন এড়িয়ে যান",
+micListening:"শুনছে…",micNotSupported:"এই ব্রাউজারে ভয়েস কমান্ড সমর্থিত নয়।",
+micHeard:"শোনা গেছে: \u201c{text}\u201d",
+typeSupply:"সরবরাহ ঘাটতি",typeInjury:"আঘাত / চিকিৎসা",typeStructural:"কাঠামোগত ক্ষতি",typeMissing:"নিখোঁজ ব্যক্তি",typeOther:"অন্যান্য",
+sevLow:"কম",sevMed:"মাঝারি",sevHigh:"উচ্চ",
+comAll:"সবাই",comMedical:"চিকিৎসা",comEngineering:"প্রকৌশল",comCooking:"রান্না",comSecurity:"নিরাপত্তা",comLogistics:"লজিস্টিকস",
+hlEmergency:"জাতীয় জরুরি",hlAmbulance:"অ্যাম্বুলেন্স",hlPolice:"পুলিশ",hlFire:"দমকল",hlDisaster:"দুর্যোগ ব্যবস্থাপনা (NDMA)",hlWomen:"নারী হেল্পলাইন",hlChild:"শিশু হেল্পলাইন"},
+
+mr:{brand:"LifeKeeper",statusOffline:"ऑफलाइन · डेटा डिव्हाइसवर जतन",modeDaily:"दैनंदिन जीवन",modeDisaster:"आपत्ती मोड",
+navHome:"होम",navJournal:"डायरी",navLog:"लॉग",navChat:"चॅट",navMap:"नकाशा",navMedia:"मीडिया",
+disasterBanner:"आपत्ती मोड सक्रिय — तुमचा नंबर व स्थान पाठवण्यास तयार",
+homeJournalEntries:"डायरी नोंदी",homePeersNearby:"जवळचे लोक",
+homeAISummaryEmpty:"अद्याप डायरी नोंदी नाहीत. सुरुवात करण्यासाठी एक जोडा.",
+homeAISummaryHas:"तुमच्या जतन केलेल्या डायरी नोंदी या डिव्हाइसवर ऑफलाइन उपलब्ध आहेत.",
+btnNewJournal:"नवीन डायरी नोंद",btnOpenChat:"पीअर चॅट उघडा",btnSwitchDisaster:"आपत्ती मोडवर जा",
+homeOpenIncidents:"खुल्या घटना",homeAIGuidanceLoading:"ताजे मार्गदर्शन मिळवत आहे…",
+btnLogIncident:"घटना नोंदवा",btnOpenMeshChat:"मेश चॅट व समुदाय उघडा",btnOpenMap:"नकाशा उघडा",
+btnExitDisaster:"आपत्ती मोडमधून बाहेर पडा",agencyNotified:"रिव्हरसाईड रिलीफ एजन्सीला कळवले व जोडले",
+helplineTitle:"आणीबाणी हेल्पलाइन",helplineNote:"थेट कॉल करण्यासाठी नंबरवर टॅप करा. स्थानिक क्रमांक राज्य आपत्ती व्यवस्थापन प्राधिकरणाकडून तपासा.",
+locationTitle:"अधिकाऱ्यांसाठी तयार असलेली तुमची माहिती",locationYourNumber:"तुमचा नंबर",locationYourLocation:"तुमचे स्थान",
+locationFetching:"तुमचे स्थान शोधत आहे…",locationUnavailable:"स्थान उपलब्ध नाही — स्थान परवानगी द्या",
+locationShareBtn:"आपत्ती हेल्पलाइनला पाठवा",locationCopyBtn:"तपशील कॉपी करा",locationNoPhone:"सेटिंग्जमध्ये तुमचा फोन नंबर जोडा",
+journalTitle:"दैनंदिन डायरी",journalFieldLabel:"नवीन नोंद",journalPlaceholder:"तुमच्या दिवसाबद्दल लिहा...",
+journalSave:"डायरी नोंद जतन करा",journalEmpty:"तुमच्या जतन केलेल्या नोंदी इथे दिसतील.",
+incidentTitle:"घटना नोंदवा",incidentTypeLabel:"प्रकार",incidentSeverityLabel:"तीव्रता",incidentNotesLabel:"तपशील",
+incidentNotesPlaceholder:"थोडक्यात वर्णन... किंवा बोलण्यासाठी माईक टॅप करा",incidentSave:"घटना जतन करा",
+incidentSaveNote:"जतन केलेल्या घटना या डिव्हाइसवर स्थानिक पातळीवर राहतात, नंतर बॅकएंडशी समक्रमित करता येतात.",
+incidentRecent:"अलीकडील",incidentEmpty:"अद्याप घटना नोंदवलेली नाही.",incidentAttach:"मीडियामधून फोटो/व्हिडिओ जोडा",
+chatTitleDaily:"पीअर चॅट",chatTitleDisaster:"मेश चॅट व समुदाय",chatPlaceholderDaily:"जवळच्या लोकांना संदेश...",
+chatPlaceholderDisaster:"{community}ला संदेश...",chatSend:"पाठवा",chatPeersNearbyDaily:"जवळ 3 लोक",
+chatPeersConnected:"7 लोक जोडलेले — समुदाय: {community}",
+chatCommunityNote:"समुदाय बटणे सक्रिय फिल्टर आहेत. प्रत्यक्ष वापरात हे WebSocket/WebRTC मेशशी जोडा.",
+mapTitleDaily:"जवळचा नकाशा",mapTitleDisaster:"आपत्ती प्रतिसाद नकाशा",
+mapStatus:"खऱ्या रस्त्यांसाठी, ठिकाणांसाठी व सॅटेलाइट/नकाशा स्तरांसाठी Google Maps वापरले जाते. स्थान परवानगी ऐच्छिक आहे.",
+btnLocateMe:"माझे स्थान",btnZoomIn:"झूम इन",btnZoomOut:"झूम आउट",btnSatellite:"सॅटेलाइट दृश्य",
+mediaTitle:"फोटो व व्हिडिओ",mediaAdd:"गॅलरीमधून जोडा",mediaCapture:"कॅमेऱ्याने घ्या",
+mediaEmpty:"अद्याप फोटो किंवा व्हिडिओ जोडलेला नाही.",mediaDelete:"हटवा",
+mediaNote:"मीडिया या सत्रासाठी या डिव्हाइसवर राहतो, घटना अहवालांशी जोडता येतो.",
+settingsTitle:"सेटिंग्ज",settingsPhone:"तुमचा फोन नंबर",
+settingsPhoneNote:"तुम्ही आपत्ती मोड सक्रिय केल्यास अधिकाऱ्यांसोबत आपोआप शेअर होईल.",
+settingsLanguage:"भाषा",settingsGeminiKey:"Gemini API की (ऑनलाइन AI)",
+settingsGeminiNote:"फक्त या डिव्हाइसवर जतन होते. ऑनलाइन असताना थेट AI मार्गदर्शनासाठी वापरले जाते.",
+settingsAIMode:"AI मोड",settingsAIOnline:"ऑनलाइन (Gemini)",settingsAIOffline:"ऑफलाइन (डिव्हाइसवर)",
+settingsOfflineNote:"ऑफलाइन मोड तुमच्या स्वतःच्या ऑन-डिव्हाइस मॉडेलला कॉल करतो — window.offlineAIModel.respond() मध्ये जोडा.",
+settingsSave:"सेटिंग्ज जतन करा",settingsClearData:"सर्व स्थानिक डेटा साफ करा",settingsClose:"बंद करा",
+onboardTitle:"LifeKeeper मध्ये आपले स्वागत आहे",
+onboardIntro:"आपत्ती आल्यास एका टॅपमध्ये तुमचा नंबर व स्थान अधिकाऱ्यांपर्यंत पोहोचवण्यासाठी काही तपशील मदत करतील.",
+onboardName:"तुमचे नाव (ऐच्छिक)",onboardPhone:"तुमचा फोन नंबर",
+onboardPhoneNote:"फक्त आपत्ती मोडमध्ये अधिकाऱ्यांसोबत शेअर करण्यासाठी वापरले जाईल.",onboardLanguage:"पसंतीची भाषा",
+onboardContinue:"पुढे चला",onboardSkip:"आता वगळा",
+micListening:"ऐकत आहे…",micNotSupported:"या ब्राउझरमध्ये व्हॉइस कमांड समर्थित नाहीत.",
+micHeard:"ऐकले: \u201c{text}\u201d",
+typeSupply:"पुरवठा तुटवडा",typeInjury:"दुखापत / वैद्यकीय",typeStructural:"संरचनात्मक नुकसान",typeMissing:"बेपत्ता व्यक्ती",typeOther:"इतर",
+sevLow:"कमी",sevMed:"मध्यम",sevHigh:"जास्त",
+comAll:"सर्व लोक",comMedical:"वैद्यकीय",comEngineering:"अभियांत्रिकी",comCooking:"स्वयंपाक",comSecurity:"सुरक्षा",comLogistics:"लॉजिस्टिक्स",
+hlEmergency:"राष्ट्रीय आणीबाणी",hlAmbulance:"रुग्णवाहिका",hlPolice:"पोलीस",hlFire:"अग्निशमन",hlDisaster:"आपत्ती व्यवस्थापन (NDMA)",hlWomen:"महिला हेल्पलाइन",hlChild:"बाल हेल्पलाइन"},
+
+gu:{brand:"LifeKeeper",statusOffline:"ઓફલાઇન · ડેટા ડિવાઇસ પર સાચવ્યો",modeDaily:"રોજિંદુ જીવન",modeDisaster:"આપત્તિ મોડ",
+navHome:"હોમ",navJournal:"ડાયરી",navLog:"લોગ",navChat:"ચેટ",navMap:"નકશો",navMedia:"મીડિયા",
+disasterBanner:"આપત્તિ મોડ સક્રિય — તમારો નંબર અને સ્થાન મોકલવા તૈયાર",
+homeJournalEntries:"ડાયરી એન્ટ્રીઓ",homePeersNearby:"નજીકના લોકો",
+homeAISummaryEmpty:"હજુ સુધી કોઈ ડાયરી એન્ટ્રી નથી. શરૂ કરવા માટે એક ઉમેરો.",
+homeAISummaryHas:"તમારી સાચવેલી ડાયરી એન્ટ્રીઓ આ ડિવાઇસ પર ઓફલાઇન ઉપલબ્ધ છે.",
+btnNewJournal:"નવી ડાયરી એન્ટ્રી",btnOpenChat:"પીઅર ચેટ ખોલો",btnSwitchDisaster:"આપત્તિ મોડ પર જાઓ",
+homeOpenIncidents:"ખુલ્લી ઘટનાઓ",homeAIGuidanceLoading:"તાજેતરનું માર્ગદર્શન મેળવી રહ્યું છે…",
+btnLogIncident:"ઘટના નોંધો",btnOpenMeshChat:"મેશ ચેટ અને સમુદાય ખોલો",btnOpenMap:"નકશો ખોલો",
+btnExitDisaster:"આપત્તિ મોડમાંથી બહાર નીકળો",agencyNotified:"રિવરસાઇડ રિલીફ એજન્સીને જાણ કરી અને જોડાયેલ",
+helplineTitle:"કટોકટી હેલ્પલાઇન",helplineNote:"સીધો કૉલ કરવા નંબર પર ટૅપ કરો. સ્થાનિક નંબરો રાજ્ય આપત્તિ વ્યવસ્થાપન સત્તામંડળ સાથે ચકાસો.",
+locationTitle:"અધિકારીઓ માટે તૈયાર તમારી માહિતી",locationYourNumber:"તમારો નંબર",locationYourLocation:"તમારું સ્થાન",
+locationFetching:"તમારું સ્થાન શોધી રહ્યું છે…",locationUnavailable:"સ્થાન ઉપલબ્ધ નથી — સ્થાનની પરવાનગી આપો",
+locationShareBtn:"આપત્તિ હેલ્પલાઇનને મોકલો",locationCopyBtn:"વિગતો કૉપિ કરો",locationNoPhone:"સેટિંગ્સમાં તમારો ફોન નંબર ઉમેરો",
+journalTitle:"રોજિંદી ડાયરી",journalFieldLabel:"નવી એન્ટ્રી",journalPlaceholder:"તમારા દિવસ વિશે લખો...",
+journalSave:"ડાયરી એન્ટ્રી સાચવો",journalEmpty:"તમારી સાચવેલી એન્ટ્રીઓ અહીં દેખાશે.",
+incidentTitle:"ઘટના નોંધો",incidentTypeLabel:"પ્રકાર",incidentSeverityLabel:"તીવ્રતા",incidentNotesLabel:"નોંધ",
+incidentNotesPlaceholder:"ટૂંકું વર્ણન... અથવા બોલવા માટે માઇક ટૅપ કરો",incidentSave:"ઘટના સાચવો",
+incidentSaveNote:"સાચવેલી ઘટનાઓ આ ડિવાઇસ પર સ્થાનિક રીતે રહે છે, પછીથી બેકએન્ડ સાથે સિંક કરી શકાય છે.",
+incidentRecent:"તાજેતરની",incidentEmpty:"હજુ સુધી કોઈ ઘટના નોંધાઈ નથી.",incidentAttach:"મીડિયામાંથી ફોટો/વીડિયો જોડો",
+chatTitleDaily:"પીઅર ચેટ",chatTitleDisaster:"મેશ ચેટ અને સમુદાય",chatPlaceholderDaily:"નજીકના લોકોને સંદેશ...",
+chatPlaceholderDisaster:"{community}ને સંદેશ...",chatSend:"મોકલો",chatPeersNearbyDaily:"નજીક 3 લોકો",
+chatPeersConnected:"7 લોકો જોડાયેલા — સમુદાય: {community}",
+chatCommunityNote:"સમુદાય બટનો સક્રિય ફિલ્ટર છે. વાસ્તવિક ઉપયોગમાં આને WebSocket/WebRTC મેશ સાથે જોડો.",
+mapTitleDaily:"નજીકનો નકશો",mapTitleDisaster:"આપત્તિ પ્રતિભાવ નકશો",
+mapStatus:"વાસ્તવિક રસ્તાઓ, સ્થળો અને સેટેલાઇટ/નકશા સ્તરો માટે Google Maps વપરાય છે. સ્થાનની પરવાનગી વૈકલ્પિક છે.",
+btnLocateMe:"મારું સ્થાન",btnZoomIn:"ઝૂમ ઇન",btnZoomOut:"ઝૂમ આઉટ",btnSatellite:"સેટેલાઇટ દૃશ્ય",
+mediaTitle:"ફોટા અને વીડિયો",mediaAdd:"ગેલેરીમાંથી ઉમેરો",mediaCapture:"કેમેરાથી લો",
+mediaEmpty:"હજુ સુધી કોઈ ફોટો કે વીડિયો ઉમેર્યો નથી.",mediaDelete:"કાઢી નાખો",
+mediaNote:"મીડિયા આ સત્ર માટે આ ડિવાઇસ પર રહે છે, ઘટના અહેવાલો સાથે જોડી શકાય છે.",
+settingsTitle:"સેટિંગ્સ",settingsPhone:"તમારો ફોન નંબર",
+settingsPhoneNote:"તમે આપત્તિ મોડ સક્રિય કરો ત્યારે અધિકારીઓ સાથે આપમેળે શેર થશે.",
+settingsLanguage:"ભાષા",settingsGeminiKey:"Gemini API કી (ઓનલાઇન AI)",
+settingsGeminiNote:"ફક્ત આ ડિવાઇસ પર સાચવેલ. ઓનલાઇન હોય ત્યારે લાઇવ AI માર્ગદર્શન માટે વપરાય છે.",
+settingsAIMode:"AI મોડ",settingsAIOnline:"ઓનલાઇન (Gemini)",settingsAIOffline:"ઓફલાઇન (ડિવાઇસ પર)",
+settingsOfflineNote:"ઓફલાઇન મોડ તમારા પોતાના ઓન-ડિવાઇસ મોડેલને કૉલ કરે છે — window.offlineAIModel.respond() માં જોડો.",
+settingsSave:"સેટિંગ્સ સાચવો",settingsClearData:"બધો સ્થાનિક ડેટા સાફ કરો",settingsClose:"બંધ કરો",
+onboardTitle:"LifeKeeper માં આપનું સ્વાગત છે",
+onboardIntro:"આપત્તિ આવે ત્યારે એક ટેપમાં તમારો નંબર અને સ્થાન અધિકારીઓ સુધી પહોંચાડવા થોડી વિગતો મદદ કરશે.",
+onboardName:"તમારું નામ (વૈકલ્પિક)",onboardPhone:"તમારો ફોન નંબર",
+onboardPhoneNote:"ફક્ત આપત્તિ મોડમાં અધિકારીઓ સાથે શેર કરવા માટે વપરાશે.",onboardLanguage:"પસંદગીની ભાષા",
+onboardContinue:"ચાલુ રાખો",onboardSkip:"હમણાં છોડો",
+micListening:"સાંભળી રહ્યું છે…",micNotSupported:"આ બ્રાઉઝરમાં વોઇસ કમાન્ડ સપોર્ટેડ નથી.",
+micHeard:"સાંભળ્યું: \u201c{text}\u201d",
+typeSupply:"પુરવઠાની અછત",typeInjury:"ઈજા / તબીબી",typeStructural:"માળખાકીય નુકસાન",typeMissing:"ગુમ થયેલ વ્યક્તિ",typeOther:"અન્ય",
+sevLow:"ઓછું",sevMed:"મધ્યમ",sevHigh:"વધારે",
+comAll:"બધા લોકો",comMedical:"તબીબી",comEngineering:"એન્જિનિયરિંગ",comCooking:"રસોઈ",comSecurity:"સુરક્ષા",comLogistics:"લોજિસ્ટિક્સ",
+hlEmergency:"રાષ્ટ્રીય કટોકટી",hlAmbulance:"એમ્બ્યુલન્સ",hlPolice:"પોલીસ",hlFire:"ફાયર બ્રિગેડ",hlDisaster:"આપત્તિ વ્યવસ્થાપન (NDMA)",hlWomen:"મહિલા હેલ્પલાઇન",hlChild:"બાળ હેલ્પલાઇન"},
+
+pa:{brand:"LifeKeeper",statusOffline:"ਆਫਲਾਈਨ · ਡਾਟਾ ਡਿਵਾਈਸ ਤੇ ਸੰਭਾਲਿਆ",modeDaily:"ਰੋਜ਼ਾਨਾ ਜੀਵਨ",modeDisaster:"ਆਪਦਾ ਮੋਡ",
+navHome:"ਹੋਮ",navJournal:"ਡਾਇਰੀ",navLog:"ਲੌਗ",navChat:"ਚੈਟ",navMap:"ਨਕਸ਼ਾ",navMedia:"ਮੀਡੀਆ",
+disasterBanner:"ਆਪਦਾ ਮੋਡ ਸਰਗਰਮ — ਤੁਹਾਡਾ ਨੰਬਰ ਤੇ ਟਿਕਾਣਾ ਭੇਜਣ ਲਈ ਤਿਆਰ",
+homeJournalEntries:"ਡਾਇਰੀ ਐਂਟਰੀਆਂ",homePeersNearby:"ਨੇੜਲੇ ਲੋਕ",
+homeAISummaryEmpty:"ਅਜੇ ਤੱਕ ਕੋਈ ਡਾਇਰੀ ਐਂਟਰੀ ਨਹੀਂ। ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਇੱਕ ਜੋੜੋ।",
+homeAISummaryHas:"ਤੁਹਾਡੀਆਂ ਸੰਭਾਲੀਆਂ ਡਾਇਰੀ ਐਂਟਰੀਆਂ ਇਸ ਡਿਵਾਈਸ ਤੇ ਆਫਲਾਈਨ ਉਪਲਬਧ ਹਨ।",
+btnNewJournal:"ਨਵੀਂ ਡਾਇਰੀ ਐਂਟਰੀ",btnOpenChat:"ਪੀਅਰ ਚੈਟ ਖੋਲ੍ਹੋ",btnSwitchDisaster:"ਆਪਦਾ ਮੋਡ ਵਿੱਚ ਜਾਓ",
+homeOpenIncidents:"ਖੁੱਲ੍ਹੀਆਂ ਘਟਨਾਵਾਂ",homeAIGuidanceLoading:"ਤਾਜ਼ਾ ਮਾਰਗਦਰਸ਼ਨ ਲਿਆ ਰਿਹਾ ਹੈ…",
+btnLogIncident:"ਘਟਨਾ ਦਰਜ ਕਰੋ",btnOpenMeshChat:"ਮੈਸ਼ ਚੈਟ ਤੇ ਭਾਈਚਾਰੇ ਖੋਲ੍ਹੋ",btnOpenMap:"ਨਕਸ਼ਾ ਖੋਲ੍ਹੋ",
+btnExitDisaster:"ਆਪਦਾ ਮੋਡ ਤੋਂ ਬਾਹਰ ਨਿਕਲੋ",agencyNotified:"ਰਿਵਰਸਾਈਡ ਰਿਲੀਫ਼ ਏਜੰਸੀ ਨੂੰ ਸੂਚਿਤ ਕੀਤਾ ਤੇ ਜੋੜਿਆ",
+helplineTitle:"ਐਮਰਜੈਂਸੀ ਹੈਲਪਲਾਈਨ",helplineNote:"ਸਿੱਧਾ ਕਾਲ ਕਰਨ ਲਈ ਨੰਬਰ ਤੇ ਟੈਪ ਕਰੋ। ਸਥਾਨਕ ਨੰਬਰ ਰਾਜ ਆਪਦਾ ਪ੍ਰਬੰਧਨ ਅਥਾਰਟੀ ਨਾਲ ਤਸਦੀਕ ਕਰੋ।",
+locationTitle:"ਅਧਿਕਾਰੀਆਂ ਲਈ ਤਿਆਰ ਤੁਹਾਡੀ ਜਾਣਕਾਰੀ",locationYourNumber:"ਤੁਹਾਡਾ ਨੰਬਰ",locationYourLocation:"ਤੁਹਾਡਾ ਟਿਕਾਣਾ",
+locationFetching:"ਤੁਹਾਡਾ ਟਿਕਾਣਾ ਲੱਭ ਰਿਹਾ ਹੈ…",locationUnavailable:"ਟਿਕਾਣਾ ਉਪਲਬਧ ਨਹੀਂ — ਟਿਕਾਣੇ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ",
+locationShareBtn:"ਆਪਦਾ ਹੈਲਪਲਾਈਨ ਨੂੰ ਭੇਜੋ",locationCopyBtn:"ਵੇਰਵੇ ਕਾਪੀ ਕਰੋ",locationNoPhone:"ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਆਪਣਾ ਫੋਨ ਨੰਬਰ ਜੋੜੋ",
+journalTitle:"ਰੋਜ਼ਾਨਾ ਡਾਇਰੀ",journalFieldLabel:"ਨਵੀਂ ਐਂਟਰੀ",journalPlaceholder:"ਆਪਣੇ ਦਿਨ ਬਾਰੇ ਲਿਖੋ...",
+journalSave:"ਡਾਇਰੀ ਐਂਟਰੀ ਸੰਭਾਲੋ",journalEmpty:"ਤੁਹਾਡੀਆਂ ਸੰਭਾਲੀਆਂ ਐਂਟਰੀਆਂ ਇੱਥੇ ਦਿਖਣਗੀਆਂ।",
+incidentTitle:"ਘਟਨਾ ਦਰਜ ਕਰੋ",incidentTypeLabel:"ਕਿਸਮ",incidentSeverityLabel:"ਗੰਭੀਰਤਾ",incidentNotesLabel:"ਨੋਟਸ",
+incidentNotesPlaceholder:"ਛੋਟਾ ਵੇਰਵਾ... ਜਾਂ ਬੋਲਣ ਲਈ ਮਾਈਕ ਟੈਪ ਕਰੋ",incidentSave:"ਘਟਨਾ ਸੰਭਾਲੋ",
+incidentSaveNote:"ਸੰਭਾਲੀਆਂ ਘਟਨਾਵਾਂ ਇਸ ਡਿਵਾਈਸ ਤੇ ਸਥਾਨਕ ਤੌਰ ਤੇ ਰਹਿੰਦੀਆਂ ਹਨ, ਬਾਅਦ ਵਿੱਚ ਬੈਕਐਂਡ ਨਾਲ ਸਿੰਕ ਕੀਤੀਆਂ ਜਾ ਸਕਦੀਆਂ ਹਨ।",
+incidentRecent:"ਤਾਜ਼ਾ",incidentEmpty:"ਅਜੇ ਤੱਕ ਕੋਈ ਘਟਨਾ ਦਰਜ ਨਹੀਂ।",incidentAttach:"ਮੀਡੀਆ ਤੋਂ ਫੋਟੋ/ਵੀਡੀਓ ਜੋੜੋ",
+chatTitleDaily:"ਪੀਅਰ ਚੈਟ",chatTitleDisaster:"ਮੈਸ਼ ਚੈਟ ਤੇ ਭਾਈਚਾਰੇ",chatPlaceholderDaily:"ਨੇੜਲੇ ਲੋਕਾਂ ਨੂੰ ਸੁਨੇਹਾ...",
+chatPlaceholderDisaster:"{community} ਨੂੰ ਸੁਨੇਹਾ...",chatSend:"ਭੇਜੋ",chatPeersNearbyDaily:"ਨੇੜੇ 3 ਲੋਕ",
+chatPeersConnected:"7 ਲੋਕ ਜੁੜੇ — ਭਾਈਚਾਰਾ: {community}",
+chatCommunityNote:"ਭਾਈਚਾਰਾ ਬਟਨ ਸਰਗਰਮ ਫਿਲਟਰ ਹਨ। ਅਸਲ ਵਰਤੋਂ ਵਿੱਚ ਇਸਨੂੰ WebSocket/WebRTC ਮੈਸ਼ ਨਾਲ ਜੋੜੋ।",
+mapTitleDaily:"ਨੇੜਲਾ ਨਕਸ਼ਾ",mapTitleDisaster:"ਆਪਦਾ ਪ੍ਰਤੀਕਿਰਿਆ ਨਕਸ਼ਾ",
+mapStatus:"ਅਸਲ ਸੜਕਾਂ, ਥਾਵਾਂ ਤੇ ਸੈਟੇਲਾਈਟ/ਨਕਸ਼ਾ ਪਰਤਾਂ ਲਈ Google Maps ਵਰਤਿਆ ਜਾਂਦਾ ਹੈ। ਟਿਕਾਣੇ ਦੀ ਇਜਾਜ਼ਤ ਵਿਕਲਪਿਕ ਹੈ।",
+btnLocateMe:"ਮੇਰਾ ਟਿਕਾਣਾ",btnZoomIn:"ਜ਼ੂਮ ਇਨ",btnZoomOut:"ਜ਼ੂਮ ਆਉਟ",btnSatellite:"ਸੈਟੇਲਾਈਟ ਦ੍ਰਿਸ਼",
+mediaTitle:"ਫੋਟੋਆਂ ਤੇ ਵੀਡੀਓ",mediaAdd:"ਗੈਲਰੀ ਤੋਂ ਜੋੜੋ",mediaCapture:"ਕੈਮਰੇ ਨਾਲ ਖਿੱਚੋ",
+mediaEmpty:"ਅਜੇ ਤੱਕ ਕੋਈ ਫੋਟੋ ਜਾਂ ਵੀਡੀਓ ਨਹੀਂ ਜੋੜਿਆ।",mediaDelete:"ਹਟਾਓ",
+mediaNote:"ਮੀਡੀਆ ਇਸ ਸੈਸ਼ਨ ਲਈ ਇਸ ਡਿਵਾਈਸ ਤੇ ਰਹਿੰਦਾ ਹੈ, ਘਟਨਾ ਰਿਪੋਰਟਾਂ ਨਾਲ ਜੋੜਿਆ ਜਾ ਸਕਦਾ ਹੈ।",
+settingsTitle:"ਸੈਟਿੰਗਾਂ",settingsPhone:"ਤੁਹਾਡਾ ਫੋਨ ਨੰਬਰ",
+settingsPhoneNote:"ਜੇ ਤੁਸੀਂ ਆਪਦਾ ਮੋਡ ਸਰਗਰਮ ਕਰਦੇ ਹੋ ਤਾਂ ਅਧਿਕਾਰੀਆਂ ਨਾਲ ਆਪਣੇ-ਆਪ ਸਾਂਝਾ ਹੋਵੇਗਾ।",
+settingsLanguage:"ਭਾਸ਼ਾ",settingsGeminiKey:"Gemini API ਕੁੰਜੀ (ਆਨਲਾਈਨ AI)",
+settingsGeminiNote:"ਸਿਰਫ਼ ਇਸ ਡਿਵਾਈਸ ਤੇ ਸੰਭਾਲੀ ਜਾਂਦੀ ਹੈ। ਆਨਲਾਈਨ ਹੋਣ ਤੇ ਲਾਈਵ AI ਮਾਰਗਦਰਸ਼ਨ ਲਈ ਵਰਤੀ ਜਾਂਦੀ ਹੈ।",
+settingsAIMode:"AI ਮੋਡ",settingsAIOnline:"ਆਨਲਾਈਨ (Gemini)",settingsAIOffline:"ਆਫਲਾਈਨ (ਡਿਵਾਈਸ ਤੇ)",
+settingsOfflineNote:"ਆਫਲਾਈਨ ਮੋਡ ਤੁਹਾਡੇ ਆਪਣੇ ਆਨ-ਡਿਵਾਈਸ ਮਾਡਲ ਨੂੰ ਕਾਲ ਕਰਦਾ ਹੈ — window.offlineAIModel.respond() ਵਿੱਚ ਜੋੜੋ।",
+settingsSave:"ਸੈਟਿੰਗਾਂ ਸੰਭਾਲੋ",settingsClearData:"ਸਾਰਾ ਸਥਾਨਕ ਡਾਟਾ ਸਾਫ਼ ਕਰੋ",settingsClose:"ਬੰਦ ਕਰੋ",
+onboardTitle:"LifeKeeper ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ",
+onboardIntro:"ਆਪਦਾ ਆਉਣ ਤੇ ਇੱਕ ਟੈਪ ਵਿੱਚ ਤੁਹਾਡਾ ਨੰਬਰ ਤੇ ਟਿਕਾਣਾ ਅਧਿਕਾਰੀਆਂ ਤੱਕ ਪਹੁੰਚਾਉਣ ਲਈ ਕੁਝ ਵੇਰਵੇ ਮਦਦ ਕਰਨਗੇ।",
+onboardName:"ਤੁਹਾਡਾ ਨਾਮ (ਵਿਕਲਪਿਕ)",onboardPhone:"ਤੁਹਾਡਾ ਫੋਨ ਨੰਬਰ",
+onboardPhoneNote:"ਸਿਰਫ਼ ਆਪਦਾ ਮੋਡ ਵਿੱਚ ਅਧਿਕਾਰੀਆਂ ਨਾਲ ਸਾਂਝਾ ਕਰਨ ਲਈ ਵਰਤਿਆ ਜਾਵੇਗਾ।",onboardLanguage:"ਪਸੰਦੀਦਾ ਭਾਸ਼ਾ",
+onboardContinue:"ਜਾਰੀ ਰੱਖੋ",onboardSkip:"ਹੁਣ ਛੱਡੋ",
+micListening:"ਸੁਣ ਰਿਹਾ ਹੈ…",micNotSupported:"ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਵਾਇਸ ਕਮਾਂਡ ਸਮਰਥਿਤ ਨਹੀਂ।",
+micHeard:"ਸੁਣਿਆ: \u201c{text}\u201d",
+typeSupply:"ਸਪਲਾਈ ਦੀ ਘਾਟ",typeInjury:"ਸੱਟ / ਡਾਕਟਰੀ",typeStructural:"ਢਾਂਚਾਗਤ ਨੁਕਸਾਨ",typeMissing:"ਲਾਪਤਾ ਵਿਅਕਤੀ",typeOther:"ਹੋਰ",
+sevLow:"ਘੱਟ",sevMed:"ਦਰਮਿਆਨਾ",sevHigh:"ਵੱਧ",
+comAll:"ਸਾਰੇ ਲੋਕ",comMedical:"ਡਾਕਟਰੀ",comEngineering:"ਇੰਜੀਨੀਅਰਿੰਗ",comCooking:"ਖਾਣਾ ਪਕਾਉਣਾ",comSecurity:"ਸੁਰੱਖਿਆ",comLogistics:"ਲੌਜਿਸਟਿਕਸ",
+hlEmergency:"ਰਾਸ਼ਟਰੀ ਐਮਰਜੈਂਸੀ",hlAmbulance:"ਐਂਬੂਲੈਂਸ",hlPolice:"ਪੁਲਿਸ",hlFire:"ਫਾਇਰ ਬ੍ਰਿਗੇਡ",hlDisaster:"ਆਪਦਾ ਪ੍ਰਬੰਧਨ (NDMA)",hlWomen:"ਮਹਿਲਾ ਹੈਲਪਲਾਈਨ",hlChild:"ਬਾਲ ਹੈਲਪਲਾਈਨ"},
+
+ur:{brand:"LifeKeeper",statusOffline:"آف لائن · ڈیٹا ڈیوائس پر محفوظ",modeDaily:"روزمرہ زندگی",modeDisaster:"آفت موڈ",
+navHome:"ہوم",navJournal:"ڈائری",navLog:"لاگ",navChat:"چیٹ",navMap:"نقشہ",navMedia:"میڈیا",
+disasterBanner:"آفت موڈ فعال — آپ کا نمبر اور مقام بھیجنے کے لیے تیار",
+homeJournalEntries:"ڈائری اندراجات",homePeersNearby:"قریبی لوگ",
+homeAISummaryEmpty:"ابھی تک کوئی ڈائری اندراج نہیں۔ شروع کرنے کے لیے ایک شامل کریں۔",
+homeAISummaryHas:"آپ کے محفوظ شدہ ڈائری اندراجات اس ڈیوائس پر آف لائن دستیاب ہیں۔",
+btnNewJournal:"نئی ڈائری اندراج",btnOpenChat:"پیئر چیٹ کھولیں",btnSwitchDisaster:"آفت موڈ میں جائیں",
+homeOpenIncidents:"کھلے واقعات",homeAIGuidanceLoading:"تازہ ترین رہنمائی حاصل کی جا رہی ہے…",
+btnLogIncident:"واقعہ درج کریں",btnOpenMeshChat:"میش چیٹ اور کمیونٹیز کھولیں",btnOpenMap:"نقشہ کھولیں",
+btnExitDisaster:"آفت موڈ سے باہر نکلیں",agencyNotified:"ریورسائیڈ ریلیف ایجنسی کو مطلع کیا گیا اور منسلک کیا گیا",
+helplineTitle:"ہنگامی ہیلپ لائنیں",helplineNote:"براہ راست کال کرنے کے لیے نمبر پر ٹیپ کریں۔ مقامی نمبرز ریاستی آفات مینجمنٹ اتھارٹی سے تصدیق کریں۔",
+locationTitle:"حکام کے لیے تیار آپ کی معلومات",locationYourNumber:"آپ کا نمبر",locationYourLocation:"آپ کا مقام",
+locationFetching:"آپ کا مقام تلاش کیا جا رہا ہے…",locationUnavailable:"مقام دستیاب نہیں — مقام کی اجازت دیں",
+locationShareBtn:"آفت ہیلپ لائن کو بھیجیں",locationCopyBtn:"تفصیلات کاپی کریں",locationNoPhone:"سیٹنگز میں اپنا فون نمبر شامل کریں",
+journalTitle:"روزانہ ڈائری",journalFieldLabel:"نئی اندراج",journalPlaceholder:"اپنے دن کے بارے میں لکھیں...",
+journalSave:"ڈائری اندراج محفوظ کریں",journalEmpty:"آپ کے محفوظ شدہ اندراجات یہاں نظر آئیں گے۔",
+incidentTitle:"واقعہ درج کریں",incidentTypeLabel:"قسم",incidentSeverityLabel:"شدت",incidentNotesLabel:"تفصیل",
+incidentNotesPlaceholder:"مختصر تفصیل... یا بولنے کے لیے مائیک ٹیپ کریں",incidentSave:"واقعہ محفوظ کریں",
+incidentSaveNote:"محفوظ شدہ واقعات اس ڈیوائس پر مقامی طور پر رہتے ہیں، بعد میں بیک اینڈ سے مطابقت پذیر کیے جا سکتے ہیں۔",
+incidentRecent:"حالیہ",incidentEmpty:"ابھی تک کوئی واقعہ درج نہیں۔",incidentAttach:"میڈیا سے تصویر/ویڈیو منسلک کریں",
+chatTitleDaily:"پیئر چیٹ",chatTitleDisaster:"میش چیٹ اور کمیونٹیز",chatPlaceholderDaily:"قریبی لوگوں کو پیغام...",
+chatPlaceholderDisaster:"{community} کو پیغام...",chatSend:"بھیجیں",chatPeersNearbyDaily:"قریب 3 لوگ",
+chatPeersConnected:"7 لوگ منسلک ہیں — کمیونٹی: {community}",
+chatCommunityNote:"کمیونٹی بٹن فعال فلٹرز ہیں۔ حقیقی استعمال میں اسے WebSocket/WebRTC میش سے جوڑیں۔",
+mapTitleDaily:"قریبی نقشہ",mapTitleDisaster:"آفت ردعمل نقشہ",
+mapStatus:"حقیقی سڑکوں، مقامات اور سیٹلائٹ/نقشہ تہوں کے لیے Google Maps استعمال ہوتا ہے۔ مقام کی اجازت اختیاری ہے۔",
+btnLocateMe:"میرا مقام",btnZoomIn:"زوم ان",btnZoomOut:"زوم آؤٹ",btnSatellite:"سیٹلائٹ منظر",
+mediaTitle:"تصاویر اور ویڈیوز",mediaAdd:"گیلری سے شامل کریں",mediaCapture:"کیمرے سے لیں",
+mediaEmpty:"ابھی تک کوئی تصویر یا ویڈیو شامل نہیں کی گئی۔",mediaDelete:"حذف کریں",
+mediaNote:"میڈیا اس سیشن کے لیے اس ڈیوائس پر رہتا ہے، واقعہ رپورٹس سے منسلک کیا جا سکتا ہے۔",
+settingsTitle:"سیٹنگز",settingsPhone:"آپ کا فون نمبر",
+settingsPhoneNote:"اگر آپ آفت موڈ فعال کرتے ہیں تو حکام کے ساتھ خودکار طور پر شیئر ہو جائے گا۔",
+settingsLanguage:"زبان",settingsGeminiKey:"Gemini API کلید (آن لائن AI)",
+settingsGeminiNote:"صرف اس ڈیوائس پر محفوظ ہے۔ آن لائن ہونے پر لائیو AI رہنمائی کے لیے استعمال ہوتی ہے۔",
+settingsAIMode:"AI موڈ",settingsAIOnline:"آن لائن (Gemini)",settingsAIOffline:"آف لائن (ڈیوائس پر)",
+settingsOfflineNote:"آف لائن موڈ آپ کے اپنے آن ڈیوائس ماڈل کو کال کرتا ہے — window.offlineAIModel.respond() میں جوڑیں۔",
+settingsSave:"سیٹنگز محفوظ کریں",settingsClearData:"تمام مقامی ڈیٹا صاف کریں",settingsClose:"بند کریں",
+onboardTitle:"LifeKeeper میں خوش آمدید",
+onboardIntro:"آفت آنے پر ایک ٹیپ میں آپ کا نمبر اور مقام حکام تک پہنچانے کے لیے کچھ تفصیلات مدد کریں گی۔",
+onboardName:"آپ کا نام (اختیاری)",onboardPhone:"آپ کا فون نمبر",
+onboardPhoneNote:"صرف آفت موڈ میں حکام کے ساتھ شیئر کرنے کے لیے استعمال ہوگا۔",onboardLanguage:"پسندیدہ زبان",
+onboardContinue:"جاری رکھیں",onboardSkip:"ابھی چھوڑیں",
+micListening:"سن رہا ہے…",micNotSupported:"اس براؤزر میں صوتی کمانڈز تعاون یافتہ نہیں ہیں۔",
+micHeard:"سنا گیا: \u201c{text}\u201d",
+typeSupply:"سامان کی قلت",typeInjury:"چوٹ / طبی",typeStructural:"ساختی نقصان",typeMissing:"لاپتہ شخص",typeOther:"دیگر",
+sevLow:"کم",sevMed:"درمیانہ",sevHigh:"زیادہ",
+comAll:"سب لوگ",comMedical:"طبی",comEngineering:"انجینئرنگ",comCooking:"کھانا پکانا",comSecurity:"سیکیورٹی",comLogistics:"لاجسٹکس",
+hlEmergency:"قومی ہنگامی نمبر",hlAmbulance:"ایمبولینس",hlPolice:"پولیس",hlFire:"فائر بریگیڈ",hlDisaster:"آفات کا انتظام (NDMA)",hlWomen:"خواتین ہیلپ لائن",hlChild:"بچوں کی ہیلپ لائن"}
+};
+
+const LANGUAGES=[{code:'en',label:'English'},{code:'hi',label:'हिन्दी'},{code:'ta',label:'தமிழ்'},{code:'te',label:'తెలుగు'},
+{code:'kn',label:'ಕನ್ನಡ'},{code:'ml',label:'മലയാളം'},{code:'bn',label:'বাংলা'},{code:'mr',label:'मराठी'},
+{code:'gu',label:'ગુજરાતી'},{code:'pa',label:'ਪੰਜਾਬੀ'},{code:'ur',label:'اردو'}];
+
+function tr(key,vars){
+  let s=(TR[state.language]&&TR[state.language][key])||TR.en[key]||key;
+  if(vars) Object.keys(vars).forEach(k=>{ s=s.replace('{'+k+'}',vars[k]); });
+  return s;
+}
+
+const HELPLINES=[
+  {key:'hlEmergency',number:'112'},
+  {key:'hlAmbulance',number:'108'},
+  {key:'hlPolice',number:'100'},
+  {key:'hlFire',number:'101'},
+  {key:'hlDisaster',number:'1078'},
+  {key:'hlWomen',number:'1091'},
+  {key:'hlChild',number:'1098'}
+];
+
+const INCIDENT_TYPES=['typeSupply','typeInjury','typeStructural','typeMissing','typeOther'];
+const SEVERITIES=['sevLow','sevMed','sevHigh'];
+const COMMUNITY_KEYS=['comAll','comMedical','comEngineering','comCooking','comSecurity','comLogistics'];
+
+/* ===================== State ===================== */
+let state = {
+  mode:'daily',
+  tab:'home',
+  community:'comAll',
+  language: localStorage.getItem('lk_language') || 'en',
+  userName: localStorage.getItem('lk_userName') || '',
+  userPhone: localStorage.getItem('lk_userPhone') || '',
+  geminiApiKey: localStorage.getItem('lk_geminiKey') || '',
+  aiMode: localStorage.getItem('lk_aiMode') || 'online',
+  onboarded: localStorage.getItem('lk_onboarded')==='1',
+  settingsOpen:false,
+  location:null,
+  locationStatus:'idle',
+  media: [],
+  messages: JSON.parse(localStorage.getItem('lk_messages') || 'null') || [
+    {community:'comAll',who:'them',name:'Dhruv',text:'Anyone near the north gate? We need another set of hands.',time:'2m ago'},
+    {community:'comAll',who:'me',name:'You',text:'On my way, bringing the first-aid kit.',time:'1m ago'},
+    {community:'comAll',who:'them',name:'Namit',text:'Logged it in the incident board so it stays on record.',time:'just now'}
+  ],
+  incidents: JSON.parse(localStorage.getItem('lk_incidents') || '[]'),
+  journals: JSON.parse(localStorage.getItem('lk_journals') || '[]')
+};
+
+function persist(){
+  localStorage.setItem('lk_messages', JSON.stringify(state.messages));
+  localStorage.setItem('lk_incidents', JSON.stringify(state.incidents));
+  localStorage.setItem('lk_journals', JSON.stringify(state.journals));
+  localStorage.setItem('lk_language', state.language);
+  localStorage.setItem('lk_userName', state.userName);
+  localStorage.setItem('lk_userPhone', state.userPhone);
+  localStorage.setItem('lk_geminiKey', state.geminiApiKey);
+  localStorage.setItem('lk_aiMode', state.aiMode);
+  localStorage.setItem('lk_onboarded', state.onboarded?'1':'0');
+}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function now(){return new Date().toLocaleString([], {dateStyle:'medium',timeStyle:'short'});}
+
+let toastTimer=null;
+function showToast(msg){
+  const phone=document.getElementById('phone');
+  let el=document.getElementById('toast');
+  if(!el){ el=document.createElement('div'); el.id='toast'; el.className='toast'; phone.appendChild(el); }
+  el.textContent=msg;
+  el.style.display='block';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{ if(el) el.style.display='none'; },3200);
+}
+
+/* ===================== Mode / tab ===================== */
+function setMode(m){
+  state.mode=m; state.tab='home'; render();
+  if(m==='disaster') prepareDisasterInfo();
+}
+function setTab(t){ state.tab=t; render(); if(t==='map') setTimeout(initMap,50); }
+function setLanguage(l){ state.language=l; persist(); render(); }
+function selectCommunity(cKey){ state.community=cKey; render(); }
+
+/* ===================== Onboarding ===================== */
+function renderOnboarding(){
+  const root=document.getElementById('modalRoot');
+  if(!root) return;
+  if(state.onboarded){ root.innerHTML=''; return; }
+  root.innerHTML=`
+    <div class="modal-overlay">
+      <div class="modal-box">
+        <h2>${tr('onboardTitle')}</h2>
+        <p class="intro">${tr('onboardIntro')}</p>
+        <p class="field-label">${tr('onboardName')}</p>
+        <input type="text" id="obName" placeholder="${tr('onboardName')}">
+        <p class="field-label">${tr('onboardPhone')}</p>
+        <input type="text" id="obPhone" placeholder="+91 9XXXXXXXXX" inputmode="tel">
+        <p class="small-note" style="margin:-10px 0 14px">${tr('onboardPhoneNote')}</p>
+        <p class="field-label">${tr('onboardLanguage')}</p>
+        <div class="lang-grid" id="obLangGrid">
+          ${LANGUAGES.map(l=>`<button type="button" class="${state.language===l.code?'active':''}" data-lang="${l.code}">${l.label}</button>`).join('')}
+        </div>
+        <div class="modal-actions">
+          <button class="action-btn primary" style="justify-content:center;flex:1" onclick="completeOnboarding()">${tr('onboardContinue')}</button>
+        </div>
+        <button class="text-btn" onclick="skipOnboarding()">${tr('onboardSkip')}</button>
+      </div>
+    </div>`;
+  root.querySelectorAll('#obLangGrid button').forEach(b=>{
+    b.onclick=()=>{ state.language=b.dataset.lang; renderOnboarding(); };
+  });
+}
+function completeOnboarding(){
+  const name=document.getElementById('obName').value.trim();
+  const phone=document.getElementById('obPhone').value.trim();
+  state.userName=name; state.userPhone=phone; state.onboarded=true;
+  persist(); render();
+}
+function skipOnboarding(){ state.onboarded=true; persist(); render(); }
+
+/* ===================== Settings ===================== */
+function openSettings(){ state.settingsOpen=true; renderSettings(); }
+function closeSettings(){ state.settingsOpen=false; renderSettings(); }
+function renderSettings(){
+  const root=document.getElementById('modalRoot');
+  if(!root) return;
+  if(!state.settingsOpen){ if(state.onboarded) root.innerHTML=''; else renderOnboarding(); return; }
+  root.innerHTML=`
+    <div class="modal-overlay">
+      <div class="modal-box">
+        <h2>${tr('settingsTitle')}</h2>
+        <p class="field-label">${tr('settingsPhone')}</p>
+        <input type="text" id="setPhone" value="${esc(state.userPhone)}" inputmode="tel">
+        <p class="small-note" style="margin:-10px 0 14px">${tr('settingsPhoneNote')}</p>
+        <p class="field-label">${tr('settingsLanguage')}</p>
+        <div class="lang-grid" id="setLangGrid">
+          ${LANGUAGES.map(l=>`<button type="button" class="${state.language===l.code?'active':''}" data-lang="${l.code}">${l.label}</button>`).join('')}
+        </div>
+        <p class="field-label">${tr('settingsAIMode')}</p>
+        <div class="ai-toggle" id="setAiToggle">
+          <button type="button" class="${state.aiMode==='online'?'active':''}" data-mode="online">${tr('settingsAIOnline')}</button>
+          <button type="button" class="${state.aiMode==='offline'?'active':''}" data-mode="offline">${tr('settingsAIOffline')}</button>
+        </div>
+        <p class="field-label">${tr('settingsGeminiKey')}</p>
+        <input type="text" id="setGeminiKey" value="${esc(state.geminiApiKey)}" placeholder="AIza...">
+        <p class="small-note" style="margin:-10px 0 14px">${tr('settingsGeminiNote')}</p>
+        <p class="small-note" style="margin:0 0 14px">${tr('settingsOfflineNote')}</p>
+        <div class="modal-actions">
+          <button class="action-btn primary" style="justify-content:center;flex:1" onclick="saveSettingsForm()">${tr('settingsSave')}</button>
+        </div>
+        <div class="modal-actions">
+          <button class="action-btn" style="justify-content:center;flex:1" onclick="closeSettings()">${tr('settingsClose')}</button>
+        </div>
+        <button class="text-btn" onclick="clearAllData()">${tr('settingsClearData')}</button>
+      </div>
+    </div>`;
+  root.querySelectorAll('#setLangGrid button').forEach(b=>{
+    b.onclick=()=>{ state.language=b.dataset.lang; renderSettings(); };
+  });
+  root.querySelectorAll('#setAiToggle button').forEach(b=>{
+    b.onclick=()=>{ state.aiMode=b.dataset.mode; renderSettings(); };
+  });
+}
+function saveSettingsForm(){
+  state.userPhone=document.getElementById('setPhone').value.trim();
+  state.geminiApiKey=document.getElementById('setGeminiKey').value.trim();
+  state.settingsOpen=false;
+  persist(); render();
+}
+function clearAllData(){
+  if(!confirm('Clear all locally saved LifeKeeper data on this device?')) return;
+  localStorage.clear();
+  location.reload();
+}
+
+/* ===================== Disaster location & helplines ===================== */
+function prepareDisasterInfo(){
+  if(!navigator.geolocation){ state.locationStatus='error'; renderLocationCard(); return; }
+  state.locationStatus='fetching'; renderLocationCard();
+  navigator.geolocation.getCurrentPosition(
+    p=>{ state.location={lat:p.coords.latitude,lng:p.coords.longitude}; state.locationStatus='ready'; renderLocationCard(); },
+    ()=>{ state.locationStatus='error'; renderLocationCard(); },
+    {enableHighAccuracy:true,timeout:15000,maximumAge:60000}
+  );
+}
+function renderLocationCard(){
+  const el=document.getElementById('locationCardBody');
+  if(el) el.outerHTML=locationCardInner();
+}
+function locationCardInner(){
+  const locText = state.locationStatus==='ready' && state.location
+    ? state.location.lat.toFixed(5)+', '+state.location.lng.toFixed(5)
+    : state.locationStatus==='fetching' ? tr('locationFetching') : tr('locationUnavailable');
+  return `<div id="locationCardBody">
+    <div class="location-row"><span class="k">${tr('locationYourNumber')}</span><span>${state.userPhone?esc(state.userPhone):tr('locationNoPhone')}</span></div>
+    <div class="location-row"><span class="k">${tr('locationYourLocation')}</span><span>${esc(locText)}</span></div>
+    <div class="location-actions">
+      <button onclick="shareLocationWithAuthorities()">${tr('locationShareBtn')}</button>
+      <button class="secondary" onclick="copyLocationDetails()">${tr('locationCopyBtn')}</button>
+    </div>
+  </div>`;
+}
+function buildShareMessage(){
+  const mapsLink = state.location ? `https://maps.google.com/?q=${state.location.lat},${state.location.lng}` : '';
+  return `LifeKeeper SOS. Name: ${state.userName||'N/A'}. Phone: ${state.userPhone||'N/A'}. Location: ${mapsLink||'unavailable'}`;
+}
+function shareLocationWithAuthorities(){
+  const msg=buildShareMessage();
+  const number=HELPLINES.find(h=>h.key==='hlDisaster').number;
+  showToast(tr('toastLocationShared'));
+  window.location.href = `sms:${number}?&body=${encodeURIComponent(msg)}`;
+}
+function copyLocationDetails(){
+  const msg=buildShareMessage();
+  if(navigator.clipboard) navigator.clipboard.writeText(msg).then(()=>showToast('✓ '+tr('locationCopyBtn')));
+  else showToast(msg);
+}
+function callNumber(num){ window.location.href='tel:'+num; }
+function helplineCard(){
+  return `<div class="helpline-card">
+    <h3>${tr('helplineTitle')}</h3>
+    ${HELPLINES.map(h=>`
+      <div class="helpline-row">
+        <div><div class="name">${tr(h.key)}</div><div class="num">${h.number}</div></div>
+        <button class="call-chip" onclick="callNumber('${h.number}')">☎ ${state.language==='en'?'Call':tr('locationShareBtn').split(' ')[0]}</button>
+      </div>`).join('')}
+    <p class="helpline-note">${tr('helplineNote')}</p>
+  </div>`;
+}
+function locationCard(){
+  return `<div class="location-card"><h3>${tr('locationTitle')}</h3>${locationCardInner()}</div>`;
+}
+
+/* ===================== Home ===================== */
+function homeScreen(){
+  if(state.mode==='daily') return `
+    <div class="stat-row">
+      <div class="card stat-card"><p class="label">${tr('homeJournalEntries')}</p><p class="value">${state.journals.length}</p></div>
+      <div class="card stat-card"><p class="label">${tr('homePeersNearby')}</p><p class="value">3</p></div>
+    </div>
+    <div class="ai-card"><p class="label">AI</p><p class="body" id="aiGuidanceText">${state.journals.length ? tr('homeAISummaryHas') : tr('homeAISummaryEmpty')}</p></div>
+    <button class="action-btn" onclick="setTab('log')">${svg.notebook} ${tr('btnNewJournal')}</button>
+    <button class="action-btn" onclick="setTab('chat')">${svg.chat} ${tr('btnOpenChat')}</button>
+    <button class="action-btn" onclick="setMode('disaster')">${svg.alert} ${tr('btnSwitchDisaster')}</button>`;
+  return `
+    <div class="agency-strip">${svg.shield} ${tr('agencyNotified')}</div>
+    ${locationCard()}
+    ${helplineCard()}
+    <div class="stat-row">
+      <div class="card stat-card"><p class="label">${tr('homeOpenIncidents')}</p><p class="value">${state.incidents.length}</p></div>
+      <div class="card stat-card"><p class="label">${tr('homePeersNearby')}</p><p class="value">7</p></div>
+    </div>
+    <div class="ai-card"><p class="label">AI</p><p class="body" id="aiGuidanceText">${tr('homeAIGuidanceLoading')}</p></div>
+    <button class="action-btn primary" onclick="setTab('log')">${svg.alert} ${tr('btnLogIncident')}</button>
+    <button class="action-btn" onclick="setTab('chat')">${svg.chat} ${tr('btnOpenMeshChat')}</button>
+    <button class="action-btn" onclick="setTab('map')">⌖ ${tr('btnOpenMap')}</button>
+    <button class="action-btn" onclick="setTab('media')">▣ ${tr('navMedia')}</button>
+    <button class="action-btn" onclick="setMode('daily')">${tr('btnExitDisaster')}</button>`;
+}
+
+/* ===================== AI guidance (Gemini online / offline stub) ===================== */
+async function callGeminiAI(prompt){
+  if(!state.geminiApiKey) return null;
+  try{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(state.geminiApiKey)}`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+    });
+    if(!res.ok) return null;
+    const data=await res.json();
+    return (data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+      data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
+      data.candidates[0].content.parts[0].text) || null;
+  }catch(e){ console.error('Gemini API error',e); return null; }
+}
+async function offlineAIRespond(prompt){
+  // Wire your on-device / offline model here. Contract:
+  // window.offlineAIModel = { respond: async (promptText) => "model's text reply" };
+  if(window.offlineAIModel && typeof window.offlineAIModel.respond==='function'){
+    try{ return await window.offlineAIModel.respond(prompt); }catch(e){ console.error('Offline AI error',e); return null; }
+  }
+  return null;
+}
+async function refreshAIGuidance(){
+  if(state.mode!=='disaster') return;
+  const prompt=`You are a calm, practical disaster-response assistant for a community safety app called LifeKeeper. `+
+    `In ${LANGUAGES.find(l=>l.code===state.language)?.label||'English'}, in 2 short sentences, give one piece of practical, `+
+    `locally relevant safety guidance for someone currently in disaster mode. Open incidents logged so far: ${state.incidents.length}.`;
+  let text=null;
+  if(state.aiMode==='online' && navigator.onLine) text=await callGeminiAI(prompt);
+  if(!text) text=await offlineAIRespond(prompt);
+  const el=document.getElementById('aiGuidanceText');
+  if(el) el.textContent = text || 'Water supply reported low in Sector 2. Choose a community below to coordinate with people nearby.';
+}
+
+/* ===================== Log / Journal ===================== */
+function logScreen(){
+  if(state.mode==='daily') return `
+    <h2 class="screen-title">${tr('journalTitle')}</h2>
+    <div class="card" style="padding:0 14px;">
+      <div style="padding:12px 0;">
+        <p class="field-label">${tr('journalFieldLabel')}</p>
+        <textarea id="journalText" rows="4" placeholder="${tr('journalPlaceholder')}"></textarea>
+        <button class="action-btn primary" style="justify-content:center" onclick="saveJournal()">${tr('journalSave')}</button>
+      </div>
+      ${state.journals.length ? state.journals.slice().reverse().map(j=>`
+        <div class="entry"><span class="tag">${esc(j.tag)}</span><p class="snippet">${esc(j.text)}</p><span class="time">${esc(j.time)}</span></div>
+      `).join('') : `<div class="empty">${tr('journalEmpty')}</div>`}
+    </div>`;
+  return `
+    <h2 class="screen-title">${tr('incidentTitle')}</h2>
+    <div class="card" style="padding:14px;">
+      <p class="field-label">${tr('incidentTypeLabel')}</p>
+      <select id="incidentType">${INCIDENT_TYPES.map(k=>`<option value="${k}">${tr(k)}</option>`).join('')}</select>
+      <p class="field-label">${tr('incidentSeverityLabel')}</p>
+      <select id="incidentSeverity">${SEVERITIES.map(k=>`<option value="${k}">${tr(k)}</option>`).join('')}</select>
+      <p class="field-label">${tr('incidentNotesLabel')}</p>
+      <textarea id="incidentNotes" rows="3" placeholder="${tr('incidentNotesPlaceholder')}"></textarea>
+      ${state.media.length?`<p class="small-note">${tr('incidentAttach')}: ${state.media.length}</p>`:''}
+      <button class="action-btn primary" style="justify-content:center" onclick="saveIncident()">${tr('incidentSave')}</button>
+      <p class="small-note">${tr('incidentSaveNote')}</p>
+    </div>
+    <h2 class="screen-title" style="margin-top:18px;">${tr('incidentRecent')}</h2>
+    <div class="card" style="padding:0 14px;">
+      ${state.incidents.length ? state.incidents.slice().reverse().map(i=>`
+        <div class="log-item"><span>${tr(i.type)} — ${esc(i.notes || 'No notes')}<br><small>${esc(i.time)}</small></span><span class="${i.severity==='sevHigh'?'sev-high':i.severity==='sevMed'?'sev-med':''}">${tr(i.severity)}</span></div>
+      `).join('') : `<div class="empty">${tr('incidentEmpty')}</div>`}
+    </div>`;
+}
+function saveIncident(){
+  const type=document.getElementById('incidentType').value;
+  const severity=document.getElementById('incidentSeverity').value;
+  const notes=document.getElementById('incidentNotes').value.trim();
+  state.incidents.push({type,severity,notes,time:now()});
+  persist(); render();
+}
+function saveJournal(){
+  const text=document.getElementById('journalText').value.trim(); if(!text) return;
+  state.journals.push({tag:'Daily',text,time:now()});
+  persist(); render();
+}
+
+/* ===================== Chat ===================== */
+function chatScreen(){
+  const chips=state.mode==='disaster' ? `<div class="chip-row">${COMMUNITY_KEYS.map(c=>`
+    <button class="chip ${state.community===c?'active':''}" onclick="selectCommunity('${c}')">${tr(c)}</button>`).join('')}</div>`:'';
+  const msgs=state.messages.filter(m=>state.mode!=='disaster' || m.community===state.community || m.community==='comAll');
+  return `
+    <h2 class="screen-title">${state.mode==='disaster'?tr('chatTitleDisaster'):tr('chatTitleDaily')}</h2>
+    ${chips}
+    <div class="peer-bar">${state.mode==='disaster' ? '✓ '+tr('chatPeersConnected',{community:tr(state.community)}) : tr('chatPeersNearbyDaily')}</div>
+    <div id="messageList">${msgs.map(m=>`
+      <div class="bubble ${m.who}">${esc(m.text)}<div class="meta">${esc(m.name)} · ${esc(m.time)}</div></div>
+    `).join('')}</div>
+    <div class="chat-compose">
+      <input id="chatInput" type="text" placeholder="${state.mode==='disaster'?tr('chatPlaceholderDisaster',{community:tr(state.community)}):tr('chatPlaceholderDaily')}"
+             onkeydown="if(event.key==='Enter')sendMessage()">
+      <button onclick="sendMessage()">${tr('chatSend')}</button>
+    </div>
+    ${state.mode==='disaster'?`<p class="small-note">${tr('chatCommunityNote')}</p>`:''}`;
+}
+function sendMessage(){
+  const input=document.getElementById('chatInput'); if(!input || !input.value.trim()) return;
+  state.messages.push({community:state.mode==='disaster'?state.community:'comAll',who:'me',name:'You',text:input.value.trim(),time:now()});
+  persist(); render();
+}
+
+/* ===================== Media (photos & videos) ===================== */
+function mediaScreen(){
+  return `
+    <h2 class="screen-title">${tr('mediaTitle')}</h2>
+    <input type="file" id="mediaPicker" accept="image/*,video/*" multiple style="display:none" onchange="handleMediaFiles(this.files)">
+    <input type="file" id="mediaCamera" accept="image/*,video/*" capture="environment" style="display:none" onchange="handleMediaFiles(this.files)">
+    <div class="media-add-row">
+      <button class="action-btn" style="justify-content:center" onclick="document.getElementById('mediaPicker').click()">${tr('mediaAdd')}</button>
+      <button class="action-btn primary" style="justify-content:center" onclick="document.getElementById('mediaCamera').click()">${tr('mediaCapture')}</button>
+    </div>
+    <p class="small-note">${tr('mediaNote')}</p>
+    ${state.media.length ? `<div class="media-grid">${state.media.map((m,i)=>`
+      <div class="media-item">
+        ${m.type==='video' ? `<video src="${m.url}" controls></video>` : `<img src="${m.url}" alt="media">`}
+        <button class="del" title="${tr('mediaDelete')}" onclick="removeMedia(${i})">✕</button>
+      </div>`).join('')}</div>` : `<div class="empty">${tr('mediaEmpty')}</div>`}
+  `;
+}
+function handleMediaFiles(fileList){
+  Array.from(fileList).forEach(file=>{
+    const url=URL.createObjectURL(file);
+    const type=file.type.startsWith('video')?'video':'image';
+    state.media.push({type,url,name:file.name,time:now()});
+  });
+  render();
+}
+function removeMedia(i){ state.media.splice(i,1); render(); }
+
+/* ===================== Map ===================== */
+let map; let mapMarkers=[];
+let mapsScriptLoading=false; let mapsScriptLoaded=false;
+function initMap(){
+  const el=document.getElementById('google-map');
+  if(!el) return;
+  if(GOOGLE_MAPS_API_KEY==='YOUR_GOOGLE_MAPS_API_KEY'){
+    el.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:25px;color:#6B6A63;font-size:13px;background:#e9ece8">Google Maps is ready to be connected.<br><br>Add your API key in <b>GOOGLE_MAPS_API_KEY</b> in this HTML file.</div>';
+    return;
+  }
+  if(window.google && window.google.maps){ createLifeKeeperMap(); return; }
+  if(mapsScriptLoading || mapsScriptLoaded) return;
+  mapsScriptLoading=true;
+  const s=document.createElement('script');
+  s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(GOOGLE_MAPS_API_KEY)+'&callback=createLifeKeeperMap';
+  s.async=true; s.defer=true;
+  s.onerror=()=>{
+    mapsScriptLoading=false;
+    const target=document.getElementById('google-map');
+    if(target) target.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:25px;color:#b3261e;font-size:13px">Google Maps could not be loaded.<br><br>Check the API key, Maps JavaScript API, and localhost key restrictions.</div>';
+  };
+  document.head.appendChild(s);
+}
+window.createLifeKeeperMap=function(){ mapsScriptLoading=false; mapsScriptLoaded=true; createLifeKeeperMapInstance(); };
+function createLifeKeeperMap(){ createLifeKeeperMapInstance(); }
+function createLifeKeeperMapInstance(){
+  const el=document.getElementById('google-map'); if(!el) return;
+  if(!navigator.geolocation){ loadMap({lat:12.9165,lng:79.1325}); return; }
+  navigator.geolocation.getCurrentPosition(
+    p=>loadMap({lat:p.coords.latitude,lng:p.coords.longitude}),
+    ()=>loadMap({lat:12.9165,lng:79.1325}),
+    {enableHighAccuracy:true,timeout:15000,maximumAge:60000}
+  );
+}
+function loadMap(center){
+  map=new google.maps.Map(document.getElementById('google-map'),{center,zoom:15,mapTypeControl:true,streetViewControl:false,fullscreenControl:false});
+  mapMarkers=[];
+  new google.maps.Marker({map,position:center,title:'Your current location',label:'You'});
+  if(state.mode==='disaster'){
+    addMarker({lat:center.lat+0.004,lng:center.lng+0.002},'Medical support','Medical');
+    addMarker({lat:center.lat-0.003,lng:center.lng+0.004},'Engineering point','Engineering');
+    addMarker({lat:center.lat+0.002,lng:center.lng-0.004},'Safe zone','Safe zone');
+  }
+}
+function addMarker(position,title,kind){
+  const marker=new google.maps.Marker({map,position,title});
+  marker.addListener('click',()=>showToast(kind+': '+title));
+  mapMarkers.push(marker);
+}
+function locateMe(){
+  if(!map){initMap();return;}
+  navigator.geolocation.getCurrentPosition(p=>{
+    const pos={lat:p.coords.latitude,lng:p.coords.longitude};
+    map.setCenter(pos); map.setZoom(16);
+    new google.maps.Marker({map,position:pos,title:'Your current location'});
+  });
+}
+function mapScreen(){
+  return `
+    <h2 class="screen-title">${state.mode==='disaster'?tr('mapTitleDisaster'):tr('mapTitleDaily')}</h2>
+    <div class="map-box"><div id="google-map"></div></div>
+    <p class="map-status">${tr('mapStatus')}</p>
+    <div class="map-actions">
+      <button onclick="locateMe()">◎ ${tr('btnLocateMe')}</button>
+      <button onclick="if(map) map.setZoom(Math.min(map.getZoom()+1,20))">＋ ${tr('btnZoomIn')}</button>
+      <button onclick="if(map) map.setZoom(Math.max(map.getZoom()-1,3))">− ${tr('btnZoomOut')}</button>
+      <button onclick="if(map) map.setMapTypeId('satellite')">${tr('btnSatellite')}</button>
+    </div>
+    <div class="legend">
+      <span><i style="background:#B3261E"></i>Medical</span>
+      <span><i style="background:#0F6E56"></i>Engineering</span>
+      <span><i style="background:#92400E"></i>Safe zone</span>
+    </div>`;
+}
+
+/* ===================== Voice commands ===================== */
+function langToSpeechCode(l){
+  const map={en:'en-IN',hi:'hi-IN',ta:'ta-IN',te:'te-IN',kn:'kn-IN',ml:'ml-IN',bn:'bn-IN',mr:'mr-IN',gu:'gu-IN',pa:'pa-IN',ur:'ur-IN'};
+  return map[l]||'en-IN';
+}
+function startVoiceCommand(){
+  const SR=window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ showToast(tr('micNotSupported')); return; }
+  const recognition=new SR();
+  recognition.lang=langToSpeechCode(state.language);
+  recognition.interimResults=false;
+  recognition.maxAlternatives=1;
+  const fab=document.getElementById('fabMic');
+  if(fab) fab.classList.add('listening');
+  showToast(tr('micListening'));
+  try{ recognition.start(); }catch(e){ if(fab) fab.classList.remove('listening'); return; }
+  recognition.onresult=(e)=>{
+    const transcript=e.results[0][0].transcript;
+    showToast(tr('micHeard',{text:transcript}));
+    handleVoiceCommand(transcript);
+  };
+  recognition.onerror=()=>{ showToast(tr('micNotSupported')); };
+  recognition.onend=()=>{ if(fab) fab.classList.remove('listening'); };
+}
+function handleVoiceCommand(raw){
+  const t=raw.toLowerCase();
+  const has=(...words)=>words.some(w=>t.includes(w));
+
+  if(has('home','होम','ghar','ஹோம்')){ setTab('home'); return; }
+  if(has('map','नक्शा','maps','नकाशा','வரைபடம்')){ setTab('map'); if(state.tab==='map') setTimeout(initMap,50); return; }
+  if(has('chat','चैट','मेसेज','sandesh')){ setTab('chat'); return; }
+  if(has('media','photo','video','फोटो','कैमरा','camera')){ setTab('media'); return; }
+  if(has('setting','सेटिंग')){ openSettings(); return; }
+  if(has('disaster','आपदा','emergency mode','आपातकाल')){ setMode('disaster'); return; }
+  if(has('exit disaster','daily mode','सामान्य मोड')){ setMode('daily'); return; }
+  if(has('call police','पुलिस बुलाओ')){ callNumber(HELPLINES.find(h=>h.key==='hlPolice').number); return; }
+  if(has('call ambulance','एम्बुलेंस बुलाओ')){ callNumber(HELPLINES.find(h=>h.key==='hlAmbulance').number); return; }
+  if(has('call emergency','emergency number','आपातकालीन नंबर')){ callNumber(HELPLINES.find(h=>h.key==='hlEmergency').number); return; }
+  if(has('share location','share my location','स्थान भेजो','लोकेशन भेजो')){ setTab('home'); if(state.location) shareLocationWithAuthorities(); else prepareDisasterInfo(); return; }
+  if(has('log incident','report incident','घटना दर्ज')){
+    setTab('log');
+    setTimeout(()=>{ const n=document.getElementById('incidentNotes'); if(n) n.value=raw; },80);
+    return;
+  }
+
+  // Dictation fallback: drop the transcript into whichever textarea is visible.
+  const journalBox=document.getElementById('journalText');
+  const incidentBox=document.getElementById('incidentNotes');
+  const chatBox=document.getElementById('chatInput');
+  if(journalBox){ journalBox.value=(journalBox.value?journalBox.value+' ':'')+raw; return; }
+  if(incidentBox){ incidentBox.value=(incidentBox.value?incidentBox.value+' ':'')+raw; return; }
+  if(chatBox){ chatBox.value=(chatBox.value?chatBox.value+' ':'')+raw; return; }
+}
+
+/* ===================== Render ===================== */
+function render(){
+  const phone=document.getElementById('phone');
+  phone.classList.toggle('disaster',state.mode==='disaster');
+  const screens={home:homeScreen,log:logScreen,chat:chatScreen,map:mapScreen,media:mediaScreen};
+  const top=`
+    <div class="topbar"><span class="brand">${tr('brand')}</span>
+      <div class="topbar-right">
+        <span class="status-pill">◌ ${tr('statusOffline')}</span>
+        <button class="icon-btn" onclick="openSettings()" title="${tr('settingsTitle')}">${svg.gear}</button>
+      </div>
+    </div>
+    <div class="mode-toggle">
+      <button class="${state.mode==='daily'?'active':''}" onclick="setMode('daily')">${tr('modeDaily')}</button>
+      <button class="${state.mode==='disaster'?'active':''}" onclick="setMode('disaster')">${tr('modeDisaster')}</button>
+    </div>`;
+  document.getElementById('content').innerHTML=top+screens[state.tab]();
+  document.getElementById('banner').textContent='⚠ '+tr('disasterBanner');
+  document.querySelectorAll('.tabbar button').forEach(b=>{
+    b.classList.toggle('active',b.dataset.tab===state.tab);
+    b.onclick=()=>setTab(b.dataset.tab);
+  });
+  document.getElementById('logTab').textContent=state.mode==='disaster'?tr('navLog'):tr('navJournal');
+  document.getElementById('mediaTabLabel').textContent=tr('navMedia');
+  if(state.tab==='map') setTimeout(initMap,50);
+  if(state.tab==='home' && state.mode==='disaster') setTimeout(refreshAIGuidance,30);
+  if(!state.onboarded) renderOnboarding(); else if(state.settingsOpen) renderSettings();
+  else { const mr=document.getElementById('modalRoot'); if(mr) mr.innerHTML=''; }
+}
+render();
+
+</script>
+</body>
+</html>
